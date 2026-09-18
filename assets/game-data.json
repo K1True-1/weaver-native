@@ -1,0 +1,1281 @@
+{
+  "BOSS_PHASES": {
+    "B01": [
+      {
+        "kind": "attack",
+        "damage": 12,
+        "hits": 1,
+        "burn": 0
+      },
+      {
+        "kind": "guard",
+        "block": 12,
+        "damage": 8,
+        "hits": 1
+      },
+      {
+        "kind": "attack",
+        "damage": 18,
+        "hits": 1,
+        "burn": 0
+      }
+    ],
+    "B02": [
+      {
+        "kind": "attack",
+        "damage": 7,
+        "hits": 2,
+        "burn": 0
+      },
+      {
+        "kind": "attack",
+        "damage": 20,
+        "hits": 1,
+        "burn": 0
+      },
+      {
+        "kind": "guard",
+        "block": 16,
+        "damage": 12,
+        "hits": 1
+      }
+    ],
+    "B03": [
+      {
+        "kind": "attack",
+        "damage": 7,
+        "hits": 4,
+        "burn": 0
+      },
+      {
+        "kind": "attack",
+        "damage": 30,
+        "hits": 1,
+        "burn": 0
+      },
+      {
+        "kind": "guard",
+        "block": 16,
+        "damage": 18,
+        "hits": 1
+      }
+    ]
+  },
+  "CARDS": {
+    "C01": {
+      "id": "C01",
+      "name": "短击",
+      "type": "attack",
+      "rarity": "common",
+      "cost": 1,
+      "text": "造成 6 点伤害。",
+      "plus": "造成 9 点伤害。",
+      "art": 0,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C02": {
+      "id": "C02",
+      "name": "格挡",
+      "type": "defense",
+      "rarity": "common",
+      "cost": 1,
+      "text": "给予自己或物件 5 点护甲。",
+      "plus": "给予 8 点护甲。",
+      "art": 1,
+      "tags": [
+        "block"
+      ],
+      "exhaust": false
+    },
+    "C03": {
+      "id": "C03",
+      "name": "换手",
+      "type": "skill",
+      "rarity": "common",
+      "cost": 0,
+      "text": "抽 1 张牌，再弃 1 张。",
+      "plus": "抽 2 张牌，再弃 1 张。",
+      "art": 3,
+      "tags": [
+        "draw",
+        "discard"
+      ],
+      "exhaust": false
+    },
+    "C04": {
+      "id": "C04",
+      "name": "观察",
+      "type": "skill",
+      "rarity": "common",
+      "cost": 0,
+      "text": "抽 2 张牌。消耗。",
+      "plus": "抽 3 张牌。消耗。",
+      "art": 3,
+      "tags": [
+        "draw"
+      ],
+      "exhaust": true
+    },
+    "C05": {
+      "id": "C05",
+      "name": "重击",
+      "type": "attack",
+      "rarity": "common",
+      "cost": 2,
+      "text": "造成 14 点伤害。",
+      "plus": "造成 18 点伤害。",
+      "art": 0,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C06": {
+      "id": "C06",
+      "name": "火球",
+      "type": "attack",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "造成 8 点伤害，对敌人施加 2 层燃烧。",
+      "plus": "10 点伤害，3 层燃烧。",
+      "art": 2,
+      "tags": [
+        "attack",
+        "fire"
+      ],
+      "exhaust": false
+    },
+    "C07": {
+      "id": "C07",
+      "name": "双刃",
+      "type": "attack",
+      "rarity": "common",
+      "cost": 1,
+      "text": "造成 4 点伤害两次。",
+      "plus": "造成 5 点伤害两次。",
+      "art": 5,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C08": {
+      "id": "C08",
+      "name": "裂甲",
+      "type": "attack",
+      "rarity": "uncommon",
+      "cost": 2,
+      "text": "清除目标护甲，再造成 10 点伤害。",
+      "plus": "清除护甲，造成 14 点伤害。",
+      "art": 0,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C09": {
+      "id": "C09",
+      "name": "横扫",
+      "type": "attack",
+      "rarity": "uncommon",
+      "cost": 2,
+      "text": "对所有敌人造成 7 点伤害。",
+      "plus": "对所有敌人造成 10 点伤害。",
+      "art": 5,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C10": {
+      "id": "C10",
+      "name": "引爆",
+      "type": "attack",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "造成 6 点伤害，对物件额外 +6；击碎物件后对所有敌人造成 5 点环境伤害。",
+      "plus": "基础伤害 8，爆破伤害 7。",
+      "art": 2,
+      "tags": [
+        "attack",
+        "fire"
+      ],
+      "exhaust": false
+    },
+    "C11": {
+      "id": "C11",
+      "name": "飞刃",
+      "type": "attack",
+      "rarity": "common",
+      "cost": 0,
+      "text": "造成 4 点伤害。",
+      "plus": "造成 6 点伤害。",
+      "art": 0,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C12": {
+      "id": "C12",
+      "name": "引线",
+      "type": "attack",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "造成 3 点伤害；本回合下一张攻击每段 +4。",
+      "plus": "造成 5 点伤害；下一张每段 +5。",
+      "art": 2,
+      "tags": [
+        "attack",
+        "fire"
+      ],
+      "exhaust": false
+    },
+    "C13": {
+      "id": "C13",
+      "name": "强击",
+      "type": "attack",
+      "rarity": "rare",
+      "cost": 3,
+      "text": "造成 24 点伤害。",
+      "plus": "造成 32 点伤害。",
+      "art": 0,
+      "tags": [
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C14": {
+      "id": "C14",
+      "name": "护甲术",
+      "type": "defense",
+      "rarity": "common",
+      "cost": 1,
+      "text": "给予自己或物件 8 点护甲。",
+      "plus": "给予 11 点护甲。",
+      "art": 1,
+      "tags": [
+        "block"
+      ],
+      "exhaust": false
+    },
+    "C15": {
+      "id": "C15",
+      "name": "壁垒",
+      "type": "defense",
+      "rarity": "uncommon",
+      "cost": 2,
+      "text": "自己获得 12 护甲，本场力量 +1。",
+      "plus": "自己获得 16 护甲，本场力量 +1。",
+      "art": 1,
+      "tags": [
+        "block"
+      ],
+      "exhaust": false
+    },
+    "C16": {
+      "id": "C16",
+      "name": "铁衣",
+      "type": "defense",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "自己获得 5 护甲，抽 1 张牌。",
+      "plus": "自己获得 8 护甲，抽 1 张。",
+      "art": 1,
+      "tags": [
+        "block",
+        "draw"
+      ],
+      "exhaust": false
+    },
+    "C17": {
+      "id": "C17",
+      "name": "反震",
+      "type": "defense",
+      "rarity": "uncommon",
+      "cost": 2,
+      "text": "自己获得 8 护甲，对敌人造成 6 点伤害。",
+      "plus": "自己获得 10 护甲，造成 8 点伤害。",
+      "art": 1,
+      "tags": [
+        "block",
+        "attack"
+      ],
+      "exhaust": false
+    },
+    "C18": {
+      "id": "C18",
+      "name": "储势",
+      "type": "defense",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "自己获得 6 护甲；本回合下一张手动攻击费用 -1，不叠加。",
+      "plus": "自己获得 9 护甲，同样减费。",
+      "art": 1,
+      "tags": [
+        "block"
+      ],
+      "exhaust": false
+    },
+    "C19": {
+      "id": "C19",
+      "name": "翻页",
+      "type": "skill",
+      "rarity": "common",
+      "cost": 1,
+      "text": "抽 2 张牌。",
+      "plus": "抽 3 张牌。",
+      "art": 3,
+      "tags": [
+        "draw"
+      ],
+      "exhaust": false
+    },
+    "C20": {
+      "id": "C20",
+      "name": "筛选",
+      "type": "skill",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "查看牌库顶 4 张，选 2 张入手，其余弃置。",
+      "plus": "查看牌库顶 5 张，选 2 张。",
+      "art": 3,
+      "tags": [
+        "draw",
+        "search"
+      ],
+      "exhaust": false
+    },
+    "C21": {
+      "id": "C21",
+      "name": "索引",
+      "type": "skill",
+      "rarity": "common",
+      "cost": 1,
+      "text": "从牌库选 1 张攻击或防御牌入手，再抽 1 张。",
+      "plus": "同样效果，费用降至 0。",
+      "art": 3,
+      "tags": [
+        "draw",
+        "search"
+      ],
+      "exhaust": false
+    },
+    "C22": {
+      "id": "C22",
+      "name": "回收",
+      "type": "skill",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "从弃牌堆选 1 张牌加入手牌。",
+      "plus": "选择最多 2 张。",
+      "art": 7,
+      "tags": [
+        "search"
+      ],
+      "exhaust": false
+    },
+    "C23": {
+      "id": "C23",
+      "name": "巡回",
+      "type": "skill",
+      "rarity": "uncommon",
+      "cost": 0,
+      "text": "弃最多 2 张牌，抽实际弃牌数 +1 张。消耗。",
+      "plus": "弃最多 3 张，抽弃牌数 +1。消耗。",
+      "art": 3,
+      "tags": [
+        "draw",
+        "discard"
+      ],
+      "exhaust": true
+    },
+    "C24": {
+      "id": "C24",
+      "name": "蓄能",
+      "type": "skill",
+      "rarity": "common",
+      "cost": 0,
+      "text": "获得 2 能量。消耗。",
+      "plus": "获得 3 能量。消耗。",
+      "art": 4,
+      "tags": [
+        "energy"
+      ],
+      "exhaust": true
+    },
+    "C25": {
+      "id": "C25",
+      "name": "回流",
+      "type": "skill",
+      "rarity": "rare",
+      "cost": 1,
+      "text": "此前已手动出牌至少 3 张：获得 2 能量；否则获得 1。",
+      "plus": "条件达成得 3 能量；否则得 1。",
+      "art": 4,
+      "tags": [
+        "energy"
+      ],
+      "exhaust": false
+    },
+    "C26": {
+      "id": "C26",
+      "name": "借势",
+      "type": "skill",
+      "rarity": "uncommon",
+      "cost": 1,
+      "text": "获得 1 能量，抽 1 张；下一张攻击每段 +3，借势加成不叠加。",
+      "plus": "攻击加成改为 +5。",
+      "art": 4,
+      "tags": [
+        "energy",
+        "draw"
+      ],
+      "exhaust": false
+    },
+    "C27": {
+      "id": "C27",
+      "name": "变现",
+      "type": "skill",
+      "rarity": "uncommon",
+      "cost": 0,
+      "text": "移除自己的 4 护甲，获得 1 能量。",
+      "plus": "移除 3 护甲，获得 1 能量。",
+      "art": 4,
+      "tags": [
+        "energy"
+      ],
+      "exhaust": false
+    },
+    "C28": {
+      "id": "C28",
+      "name": "修补",
+      "type": "defense",
+      "rarity": "common",
+      "cost": 1,
+      "text": "给予 6 护甲，或修复存活物件 6 耐久；然后抽 1 张。",
+      "plus": "护甲或修复改为 8。",
+      "art": 6,
+      "tags": [
+        "block",
+        "repair",
+        "draw"
+      ],
+      "exhaust": false
+    },
+    "C29": {
+      "id": "C29",
+      "name": "回响",
+      "type": "skill",
+      "rarity": "rare",
+      "cost": 2,
+      "text": "本回合下一张手动攻击或防御牌额外执行一次，不叠加。",
+      "plus": "费用降至 1。",
+      "art": 7,
+      "tags": [
+        "copy"
+      ],
+      "exhaust": false
+    },
+    "C30": {
+      "id": "C30",
+      "name": "开闸",
+      "type": "skill",
+      "rarity": "rare",
+      "cost": 2,
+      "text": "本回合此后每手动打出一张牌，抽 1 张。消耗，不叠加。",
+      "plus": "费用降至 1。消耗。",
+      "art": 7,
+      "tags": [
+        "draw"
+      ],
+      "exhaust": true
+    }
+  },
+  "CHAPTERS": [
+    {
+      "name": "灰垒旧道",
+      "subtitle": "月光之下，旧日的规则仍在回响。",
+      "normal": [
+        0,
+        1,
+        2
+      ],
+      "elite": 9,
+      "boss": 12
+    },
+    {
+      "name": "镜庭工坊",
+      "subtitle": "每一面碎镜，都藏着另一种可能。",
+      "normal": [
+        3,
+        4,
+        5
+      ],
+      "elite": 10,
+      "boss": 13
+    },
+    {
+      "name": "断环高台",
+      "subtitle": "当最后一道律令崩落，轮到你书写结局。",
+      "normal": [
+        6,
+        7,
+        8
+      ],
+      "elite": 11,
+      "boss": 14
+    }
+  ],
+  "ENEMIES": [
+    {
+      "id": "N01",
+      "name": "灰刃游兵",
+      "hp": 30,
+      "art": 1,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 6,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 4,
+          "damage": 4,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 9,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N02",
+      "name": "砾壳甲虫",
+      "hp": 38,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "guard",
+          "block": 8,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 8,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 10,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N03",
+      "name": "余烬学徒",
+      "hp": 32,
+      "art": 2,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 5,
+          "hits": 1,
+          "burn": 1
+        },
+        {
+          "kind": "guard",
+          "block": 4,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 8,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N04",
+      "name": "双刃卫兵",
+      "hp": 48,
+      "art": 1,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 5,
+          "hits": 2,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 7,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 13,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N05",
+      "name": "运匣兽",
+      "hp": 60,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 10,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 12,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 15,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N06",
+      "name": "蚀镜客",
+      "hp": 50,
+      "art": 4,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 9,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "strength",
+          "amount": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 12,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N07",
+      "name": "连击骑士",
+      "hp": 64,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 5,
+          "hits": 3,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 10,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 21,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "N08",
+      "name": "熔核守卫",
+      "hp": 80,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "guard",
+          "block": 15,
+          "damage": 0,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 18,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 22,
+          "hits": 1,
+          "burn": 1
+        }
+      ]
+    },
+    {
+      "id": "N09",
+      "name": "编律法师",
+      "hp": 70,
+      "art": 4,
+      "actions": [
+        {
+          "kind": "strength",
+          "amount": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 9,
+          "hits": 2,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 8,
+          "damage": 12,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "E01",
+      "name": "碎晶监工",
+      "hp": 64,
+      "art": 1,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 8,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 6,
+          "damage": 8,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 14,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "name": "双面执令",
+      "hp": 100,
+      "art": 4,
+      "actions": [
+        {
+          "kind": "strength",
+          "amount": 2
+        },
+        {
+          "kind": "attack",
+          "damage": 7,
+          "hits": 2,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 18,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 12,
+          "damage": 0,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "name": "炉心吞噬者",
+      "hp": 144,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 20,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 7,
+          "hits": 3,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 16,
+          "damage": 8,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "name": "石门守望者",
+      "hp": 100,
+      "art": 3,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 8,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 8,
+          "damage": 6,
+          "hits": 1
+        },
+        {
+          "kind": "attack",
+          "damage": 16,
+          "hits": 1,
+          "burn": 0
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "name": "镜庭执政官",
+      "hp": 160,
+      "art": 4,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 6,
+          "hits": 2,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 16,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 12,
+          "damage": 10,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "name": "断环之王",
+      "hp": 240,
+      "art": 5,
+      "actions": [
+        {
+          "kind": "attack",
+          "damage": 7,
+          "hits": 3,
+          "burn": 0
+        },
+        {
+          "kind": "attack",
+          "damage": 26,
+          "hits": 1,
+          "burn": 0
+        },
+        {
+          "kind": "guard",
+          "block": 12,
+          "damage": 16,
+          "hits": 1
+        }
+      ]
+    }
+  ],
+  "LOADOUTS": {
+    "balanced": {
+      "name": "均衡旅者",
+      "text": "攻守俱备，以每一场战斗发现新的组合。",
+      "ids": [
+        "C01",
+        "C01",
+        "C01",
+        "C01",
+        "C02",
+        "C02",
+        "C02",
+        "C03",
+        "C04",
+        "C05"
+      ]
+    },
+    "defense": {
+      "name": "不动之誓",
+      "text": "更多防护与调度，以护甲带动反击。",
+      "ids": [
+        "C01",
+        "C01",
+        "C01",
+        "C02",
+        "C02",
+        "C02",
+        "C02",
+        "C03",
+        "C04",
+        "C16"
+      ]
+    },
+    "discard": {
+      "name": "流转之风",
+      "text": "主动舍弃和过牌，让手中的选择不断流动。",
+      "ids": [
+        "C01",
+        "C01",
+        "C01",
+        "C01",
+        "C02",
+        "C02",
+        "C03",
+        "C03",
+        "C04",
+        "C23"
+      ]
+    },
+    "search": {
+      "name": "秘典行者",
+      "text": "更少直伤，更多寻找关键牌的能力。",
+      "ids": [
+        "C01",
+        "C01",
+        "C01",
+        "C02",
+        "C02",
+        "C02",
+        "C03",
+        "C04",
+        "C21",
+        "C21"
+      ]
+    }
+  },
+  "NODE_LABELS": {
+    "battle": "遭遇",
+    "elite": "精英",
+    "boss": "领主",
+    "event": "遗迹事件",
+    "shop": "旅行商人",
+    "treasure": "遗落宝藏",
+    "camp": "篝火营地"
+  },
+  "OBJECTS": [
+    {
+      "id": "O01",
+      "name": "折光晶柱",
+      "art": 4,
+      "hp": [
+        6,
+        9,
+        12
+      ],
+      "charges": 1,
+      "tag": "防护",
+      "player": "击碎后获得 {b} 护甲",
+      "enemy": "击碎者获得相同护甲"
+    },
+    {
+      "id": "O02",
+      "name": "蓄能晶簇",
+      "art": 4,
+      "hp": [
+        10,
+        14,
+        18
+      ],
+      "charges": 1,
+      "tag": "能量",
+      "player": "击碎后获得 2 能量",
+      "enemy": "击碎者力量 +2"
+    },
+    {
+      "id": "O03",
+      "name": "记忆石碑",
+      "art": 3,
+      "hp": [
+        6,
+        9,
+        12
+      ],
+      "charges": 1,
+      "tag": "调度",
+      "player": "击碎后抽 2 张牌",
+      "enemy": "力量 +1，并获得 {e} 护甲"
+    },
+    {
+      "id": "O04",
+      "name": "雷鸣瓶",
+      "art": 7,
+      "hp": [
+        4,
+        6,
+        8
+      ],
+      "charges": 1,
+      "tag": "伤害",
+      "player": "击碎后对敌人造成 {d} 环境伤害",
+      "enemy": "对你造成相同伤害"
+    },
+    {
+      "id": "O05",
+      "name": "余烬炉",
+      "art": 2,
+      "hp": [
+        12,
+        16,
+        20
+      ],
+      "charges": 2,
+      "tag": "燃烧",
+      "player": "每次实际受伤消耗一充能，对敌人施加 {f} 燃烧",
+      "enemy": "对你施加相同燃烧"
+    },
+    {
+      "id": "O06",
+      "name": "潮汐槽",
+      "art": 1,
+      "hp": [
+        12,
+        16,
+        20
+      ],
+      "charges": 1,
+      "tag": "回复",
+      "player": "击碎后恢复 {h} 生命",
+      "enemy": "击碎后恢复 {eh} 生命"
+    },
+    {
+      "id": "O07",
+      "name": "裂纹圣像",
+      "art": 7,
+      "hp": [
+        8,
+        12,
+        16
+      ],
+      "charges": 1,
+      "tag": "易伤",
+      "player": "击碎后对敌人施加 2 轮易伤",
+      "enemy": "对你施加 2 轮易伤"
+    },
+    {
+      "id": "O08",
+      "name": "引信箱",
+      "art": 2,
+      "hp": [
+        6,
+        9,
+        12
+      ],
+      "charges": 1,
+      "tag": "爆破",
+      "player": "击碎后全体受到 {x} 环境伤害，其他物件受到 {y}",
+      "enemy": "双方同样受伤，请注意自己的生命"
+    },
+    {
+      "id": "O09",
+      "name": "封蜡货箱",
+      "art": 4,
+      "tag": "封藏",
+      "text": "封蜡下藏着一份固定的补给，开启方式由你选择。"
+    },
+    {
+      "id": "O10",
+      "name": "行旅修具台",
+      "art": 6,
+      "tag": "修补",
+      "text": "旧工具还能再用一次。修复术让工作更加轻省。"
+    },
+    {
+      "id": "O11",
+      "name": "镜面水井",
+      "art": 1,
+      "tag": "休憩",
+      "text": "井中剩下最后一份清水，可以饮用，也可以换取补给。"
+    },
+    {
+      "id": "O12",
+      "name": "封存书柜",
+      "art": 3,
+      "tag": "知识",
+      "text": "整理旧书，从物资、卡牌与路径情报中取走一份。"
+    }
+  ],
+  "RARITY_NAMES": {
+    "common": "普通",
+    "uncommon": "精良",
+    "rare": "稀有"
+  },
+  "RELICS": [
+    {
+      "id": "R01",
+      "name": "铜扣",
+      "text": "每场第一回合额外 1 能量。"
+    },
+    {
+      "id": "R02",
+      "name": "行前笔记",
+      "text": "每场起手额外抽 1 张。"
+    },
+    {
+      "id": "R03",
+      "name": "墨线",
+      "text": "每回合第一次主动弃牌后获得 1 能量。"
+    },
+    {
+      "id": "R04",
+      "name": "护片",
+      "text": "每回合第一次给物件加护甲，额外 +3。"
+    },
+    {
+      "id": "R05",
+      "name": "火星",
+      "text": "每回合第一次摧毁物件后，下一张攻击每段 +4。"
+    },
+    {
+      "id": "R06",
+      "name": "空白页",
+      "text": "每回合第一次安装后抽 1 张。"
+    },
+    {
+      "id": "R07",
+      "name": "节拍器",
+      "text": "每回合手动打出第 3 张牌后获得 1 能量。"
+    },
+    {
+      "id": "R08",
+      "name": "探针",
+      "text": "每个非战斗节点首次物件交易少付 5 金币。"
+    },
+    {
+      "id": "R09",
+      "name": "便携工具",
+      "text": "营地升级或删牌时同时恢复 6 生命。"
+    },
+    {
+      "id": "R10",
+      "name": "琥珀核",
+      "text": "本局一次致命伤保留 1 生命，随后失效。"
+    }
+  ],
+  "RULES_HELP": [
+    [
+      "直接出牌",
+      "选中手牌，再点敌人、自己或物件。无目标牌可直接施放。"
+    ],
+    [
+      "安装规则",
+      "选中手牌，点击空规则槽，选择触发条件与目标。安装支付至少 1 能量，占用这张实体牌，不立即执行牌效。"
+    ],
+    [
+      "规则响应",
+      "触发后自动执行牌效，支付至少 1 能量。每回合第一次成功响应减免 1 点费用。能量不足时跳过，不欠费。"
+    ],
+    [
+      "争夺物件",
+      "攻击可击碎中立物件，防御可以保护它。敌人也会使用物件，目标与回退意图会提前显示。"
+    ],
+    [
+      "节点之间",
+      "每场重新组装。上场消耗与安装的牌都会回到完整卡组；金币、生命、升级与遗物在本局保留。"
+    ],
+    [
+      "无限连锁",
+      "合法循环可以一直执行，每 200 次响应会暂停供你选择继续或停下。你可以关闭规则，保留能量或更换目标。"
+    ]
+  ],
+  "TRIGGERS": [
+    {
+      "id": "T01",
+      "name": "出击之后",
+      "text": "手动打出攻击牌后",
+      "icon": "blade"
+    },
+    {
+      "id": "T02",
+      "name": "施术之后",
+      "text": "手动打出防御或技巧牌后",
+      "icon": "star"
+    },
+    {
+      "id": "T03",
+      "name": "灵感涌流",
+      "text": "本回合实际抽到第 6 张及之后的每张牌",
+      "icon": "book"
+    },
+    {
+      "id": "T04",
+      "name": "舍弃之时",
+      "text": "通过卡牌主动弃牌时",
+      "icon": "wind"
+    },
+    {
+      "id": "T05",
+      "name": "护甲共鸣",
+      "text": "自己获得护甲时",
+      "icon": "shield"
+    },
+    {
+      "id": "T06",
+      "name": "能量共振",
+      "text": "通过牌效、遗物或物件获得能量时",
+      "icon": "bolt"
+    },
+    {
+      "id": "T07",
+      "name": "命中回响",
+      "text": "攻击实际扣减生命或耐久时",
+      "icon": "blade"
+    },
+    {
+      "id": "T08",
+      "name": "破碎之声",
+      "text": "自己摧毁物件时",
+      "icon": "crystal"
+    }
+  ],
+  "TYPE_NAMES": {
+    "attack": "攻击",
+    "defense": "防御",
+    "skill": "技巧"
+  },
+  "VERSION": 1
+}

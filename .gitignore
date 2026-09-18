@@ -1,0 +1,14 @@
+# Godot editor cache and generated imports
+.godot/
+
+# Local exports and build output
+build/
+dist/
+*.exe
+*.pck
+
+# Local save data and platform metadata
+*.log
+.DS_Store
+Thumbs.db
+

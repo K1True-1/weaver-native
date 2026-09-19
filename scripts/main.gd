@@ -2,8 +2,17 @@ extends Control
 const Game = preload("res://scripts/game.gd")
 const Card = preload("res://scripts/card_view.gd")
 const Unit = preload("res://scripts/unit_view.gd")
+const BoardProp = preload("res://scripts/prop_view.gd")
 const Effects = preload("res://scripts/vfx.gd")
 const Screens = preload("res://scripts/screens.gd")
+const Ambience = preload("res://scripts/ambience.gd")
+const FantasySkin = preload("res://scripts/material_skin.gd")
+var ambience:Control
+var ignore_left_release=false
+var inspect_box:Panel
+var inspect_name:Label
+var inspect_text:Label
+var inspect_kind:Label
 var game
 var fx
 var screens
@@ -44,6 +53,7 @@ var mode_button:Button
 var phase_label:Label
 var chain_label:Label
 var last_log:Label
+var log_button:Button
 var header_hp:Label
 var header_gold:Label
 var deck_button:Button
@@ -72,42 +82,56 @@ var MUTED=Color("abbfc8")
 var CYAN=Color("a4e9ec")
 
 func _ready()->void:
+ Engine.max_fps=120
  font=load("res://assets/NotoSansCJKsc-Regular.otf")
  serif=load("res://assets/NotoSerifCJKsc-Regular.otf")
- var native_theme=Theme.new();native_theme.default_font=font;native_theme.default_font_size=20;theme=native_theme
+ var native_theme=Theme.new();native_theme.default_font=font;native_theme.default_font_size=20;FantasySkin.apply_native_controls(native_theme);theme=native_theme
  spells=load("res://assets/spells-atlas.webp")
  portraits=load("res://assets/characters-atlas.webp")
- var bg=TextureRect.new();bg.texture=load("res://assets/board.png");bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);bg.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;bg.stretch_mode=TextureRect.STRETCH_SCALE;bg.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(bg)
- var shade=ColorRect.new();shade.color=Color(0.015,0.025,0.05,0.17);shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);shade.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(shade)
+ ambience=Ambience.new();ambience.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(ambience)
  scene_root=_layer();header=_layer();modal_root=_layer();modal_root.z_index=100
  fx=Effects.new();add_child(fx);fx.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);fx.z_index=90
  screens=Screens.new();game=Game.new();game.presenter=_present;game.chooser=_choose
  game.changed.connect(_request_refresh)
  if game.has_signal("message"):game.message.connect(_toast)
- game.load_game()
+ if "--qa" in OS.get_cmdline_user_args():game.save_path="user://qa-session.json"
+ else:game.load_game()
  showcase="--showcase" in OS.get_cmdline_user_args()
  _refresh()
  if showcase:call_deferred("_showcase")
+ if "--verify-build" in OS.get_cmdline_user_args() and "--qa" in OS.get_cmdline_user_args():call_deferred("_verify_build")
 
 func _layer()->Control:
  var c=Control.new();c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);c.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(c);return c
 
 func _style(bg:Color,border:Color,radius:int=8,width:int=1)->StyleBoxFlat:
- var s=StyleBoxFlat.new();s.bg_color=bg;s.border_color=border;s.set_border_width_all(width);s.set_corner_radius_all(radius);s.content_margin_left=12;s.content_margin_right=12;s.content_margin_top=8;s.content_margin_bottom=8;return s
+ var s=StyleBoxFlat.new();s.bg_color=bg;s.border_color=Color(border,0.65);s.set_border_width_all(width);s.set_corner_radius_all(mini(radius,4));s.content_margin_left=12;s.content_margin_right=12;s.content_margin_top=8;s.content_margin_bottom=8;s.shadow_color=Color(0,0,0,0.22);s.shadow_size=8;return s
 
-func _panel(parent:Node,pos:Vector2,sz:Vector2,alpha:float=0.82,border:Color=Color("6a614b"))->Panel:
- var p=Panel.new();p.position=pos;p.size=sz;p.add_theme_stylebox_override("panel",_style(Color(0.035,0.075,0.11,alpha),border));p.mouse_filter=Control.MOUSE_FILTER_IGNORE;parent.add_child(p);return p
+func _panel(parent:Node,pos:Vector2,sz:Vector2,_alpha:float=0.82,_border:Color=Color("6a614b"))->Panel:
+ var p=Panel.new();p.position=pos;p.size=sz;p.add_theme_stylebox_override("panel",FantasySkin.panel(minf(sz.x,sz.y)<150));p.mouse_filter=Control.MOUSE_FILTER_IGNORE;parent.add_child(p);return p
 
 func _label(parent:Node,text:String,pos:Vector2,sz:Vector2,fs:int=20,color:Color=PALE,align:HorizontalAlignment=HORIZONTAL_ALIGNMENT_LEFT,headline:bool=false)->Label:
  var l=Label.new();l.text=text;l.position=pos;l.size=sz;l.add_theme_font_override("font",serif if headline else font);l.add_theme_font_size_override("font_size",fs);l.add_theme_color_override("font_color",color);l.horizontal_alignment=align;l.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;l.mouse_filter=Control.MOUSE_FILTER_IGNORE;parent.add_child(l);return l
 
 func _button(parent:Node,text:String,pos:Vector2,sz:Vector2,callback:Callable,primary:bool=false)->Button:
  var b=Button.new();b.position=pos;b.size=sz;b.text=text;b.add_theme_font_override("font",font);b.add_theme_font_size_override("font_size",17);b.add_theme_color_override("font_color",Color("17232b") if primary else PALE)
- b.add_theme_stylebox_override("normal",_style(Color("c4a06b") if primary else Color("132a37"),Color("ddc490") if primary else Color("6e705f"),8))
- b.add_theme_stylebox_override("hover",_style(Color("ecd09c") if primary else Color("224958"),Color("c7d9c9"),8,2))
- b.add_theme_stylebox_override("pressed",_style(Color("9c794a") if primary else Color("102230"),GOLD,8))
- b.add_theme_stylebox_override("disabled",_style(Color("15222b"),Color("454c49"),8));b.add_theme_color_override("font_disabled_color",Color("667a82"))
+ FantasySkin.apply_button(b,primary);b.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
  b.pressed.connect(func():fx.sound("click");callback.call());parent.add_child(b);return b
+
+func _icon_button(parent:Control,icon:String,tip:String,pos:Vector2,sz:Vector2,callback:Callable,count:String="")->Button:
+ var button=_button(parent,"",pos,sz,callback)
+ button.tooltip_text=tip
+ var has_count=not count.is_empty()
+ FantasySkin.icon(button,icon,Rect2(14 if has_count else (sz.x-24)/2,(sz.y-24)/2,24,24))
+ if has_count:button.set_meta("count",_label(button,count,Vector2(46,0),Vector2(sz.x-56,sz.y),19,PALE,HORIZONTAL_ALIGNMENT_CENTER))
+ return button
+
+func _set_icon_count(button:Button,value:String)->void:
+ if button.has_meta("count"):button.get_meta("count").text=value
+
+func _show_log()->void:
+ if game.s.get("battle")==null:return
+ _info("战斗记录","\n\n".join(game.s.battle.log.slice(0,18).map(func(entry):return str(entry.text))))
 
 func _request_refresh()->void:
  if not refreshed:refreshed=true;call_deferred("_deferred_refresh")
@@ -118,6 +142,7 @@ func _refresh()->void:
  if not game:return
  fx.fast=bool(game.s.settings.get("fast",false));fx.reduced=not bool(game.s.settings.get("motion",true));fx.audio_enabled=bool(game.s.settings.get("sound",true))
  var kind="title" if at_title else str(game.s.screen)
+ ambience.reduced=fx.reduced;ambience.set_mode(kind)
  var r=game.s.get("run",{})
  var node_id=str(r.get("node",{}).get("id","")) if r is Dictionary and r.get("node") is Dictionary else ""
  var key=kind+":"+node_id
@@ -142,18 +167,19 @@ func _replace_layer(old:Control)->Control:
 
 func _update_header()->void:
  for c in header.get_children():c.queue_free()
- _panel(header,Vector2(30,22),Vector2(1540,66),0.9,Color("847552"))
- _label(header,"织律者",Vector2(56,26),Vector2(180,52),31,GOLD,HORIZONTAL_ALIGNMENT_LEFT,true)
- _label(header,"NATIVE EDITION",Vector2(223,30),Vector2(200,42),13,MUTED)
- if not at_title and not game.s.get("run",{}).is_empty():
+ _label(header,"织律者",Vector2(56,26),Vector2(180,52),25,GOLD,HORIZONTAL_ALIGNMENT_LEFT,true)
+ header_hp=null;header_gold=null
+ if not at_title and not game.s.get("run",{}).is_empty() and game.s.screen!="battle":
   var r=game.s.run
   _label(header,"规则练习" if r.get("practice",false) else "第 %s 章 · %s"%[int(r.chapter)+1,game.db.chapters[mini(int(r.chapter),2)].name],Vector2(475,30),Vector2(340,45),20,PALE,HORIZONTAL_ALIGNMENT_CENTER)
-  header_hp=_label(header,"生命 %d / %d"%[r.hp,r.maxHp],Vector2(835,30),Vector2(185,45),18,Color("efb6af"))
-  header_gold=_label(header,"金币 %d"%r.gold,Vector2(1020,30),Vector2(125,45),18,GOLD)
- _button(header,"玩法",Vector2(1155,34),Vector2(75,41),_help)
- _button(header,"卡组",Vector2(1239,34),Vector2(75,41),func():_deck())
- _button(header,"设置",Vector2(1323,34),Vector2(75,41),_settings)
- _button(header,"返回",Vector2(1407,34),Vector2(125,41),_home)
+  FantasySkin.icon(header,"heart",Rect2(835,39,22,22))
+  header_hp=_label(header,str(int(r.hp)),Vector2(868,30),Vector2(150,45),18,Color("efb6af"))
+  FantasySkin.icon(header,"coins",Rect2(1020,38,24,24))
+  header_gold=_label(header,str(r.gold),Vector2(1056,30),Vector2(75,45),18,GOLD)
+ _icon_button(header,"circle-help","玩法与快捷键",Vector2(1220,34),Vector2(63,41),_help)
+ _icon_button(header,"layers","卡组",Vector2(1302,34),Vector2(63,41),func():_deck())
+ _icon_button(header,"settings","设置",Vector2(1384,34),Vector2(63,41),_settings)
+ _icon_button(header,"house","返回主菜单",Vector2(1466,34),Vector2(63,41),_home)
  _set_header_busy()
 
 func _set_header_busy()->void:
@@ -162,29 +188,30 @@ func _set_header_busy()->void:
 
 func _build_battle()->void:
  battle_root=Control.new();battle_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);battle_root.mouse_filter=Control.MOUSE_FILTER_IGNORE;scene_root.add_child(battle_root)
- _panel(battle_root,Vector2(45,138),Vector2(285,489),0.63,Color("847554"))
- _label(battle_root,"规则编织",Vector2(66,151),Vector2(245,44),25,GOLD,HORIZONTAL_ALIGNMENT_CENTER,true)
- _label(battle_root,"让卡牌成为战场的法则",Vector2(68,193),Vector2(240,30),14,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
  var b=game.s.battle
  for i in range(b.slots.size()):
-  var p=_panel(battle_root,Vector2(64,238+i*115),Vector2(247,103),0.82,Color("839792"));p.mouse_filter=Control.MOUSE_FILTER_STOP
+  var p=_panel(battle_root,Vector2(70,190+i*139),Vector2(247,116),0.82,Color("839792"));p.mouse_filter=Control.MOUSE_FILTER_STOP
+  p.tooltip_text="律令槽 · 拖入手牌以安装规则"
+  p.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
+  p.mouse_entered.connect(func():p.modulate=Color(1.15,1.13,1.05))
+  p.mouse_exited.connect(func():p.modulate=Color.WHITE)
   p.gui_input.connect(_slot_input.bind(i));slot_nodes.append(p)
- _label(battle_root,"安装占用实体牌 · 每场重组",Vector2(62,598),Vector2(252,24),13,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
- _label(battle_root,"场景物件 · 敌我共用",Vector2(1100,432),Vector2(310,34),15,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
- _panel(battle_root,Vector2(1360,154),Vector2(192,236),0.52,Color("5b6861"))
- _label(battle_root,"行动记录",Vector2(1378,165),Vector2(152,35),18,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
- last_log=_label(battle_root,"",Vector2(1377,209),Vector2(155,166),14,MUTED);last_log.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;last_log.vertical_alignment=VERTICAL_ALIGNMENT_TOP;last_log.clip_text=true
+ log_button=_icon_button(battle_root,"scroll-text","战斗记录",Vector2(1492,118),Vector2(60,47),_show_log)
+ inspect_box=_panel(battle_root,Vector2(1358,147),Vector2(200,341),0.97,GOLD);inspect_box.visible=false;inspect_box.z_index=25
+ inspect_kind=_label(inspect_box,"",Vector2(16,16),Vector2(168,29),13,CYAN)
+ inspect_name=_label(inspect_box,"",Vector2(16,53),Vector2(168,45),24,GOLD,HORIZONTAL_ALIGNMENT_LEFT,true)
+ inspect_text=_label(inspect_box,"",Vector2(16,110),Vector2(168,210),17,PALE);inspect_text.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;inspect_text.vertical_alignment=VERTICAL_ALIGNMENT_TOP
  phase_label=_label(battle_root,"",Vector2(465,92),Vector2(670,25),20,GOLD,HORIZONTAL_ALIGNMENT_CENTER,true)
- chain_label=_label(battle_root,"",Vector2(435,555),Vector2(260,45),28,CYAN,HORIZONTAL_ALIGNMENT_CENTER,true)
+ chain_label=_label(battle_root,"",Vector2(949,424),Vector2(194,45),26,CYAN,HORIZONTAL_ALIGNMENT_CENTER,true)
  turn_label=_label(battle_root,"",Vector2(1370,622),Vector2(170,33),20,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
  end_button=_button(battle_root,"结束回合",Vector2(1355,665),Vector2(198,79),func():_perform(func():await game.end_turn()),true)
- _button(battle_root,"快速结算",Vector2(1373,760),Vector2(160,42),_toggle_fast)
- deck_button=_button(battle_root,"牌库",Vector2(55,780),Vector2(155,61),func():_zone("draw"))
- discard_button=_button(battle_root,"弃牌",Vector2(55,849),Vector2(155,43),func():_zone("discard"))
- exhaust_button=_button(battle_root,"消耗",Vector2(55,900),Vector2(155,43),func():_zone("exhaust"))
- var energy=_panel(battle_root,Vector2(96,635),Vector2(132,132),0.92,Color("c5af7f"));energy.add_theme_stylebox_override("panel",_style(Color("163746"),GOLD,66,3))
- energy_label=_label(energy,"3",Vector2(0,0),Vector2(132,100),60,Color("d1f6f4"),HORIZONTAL_ALIGNMENT_CENTER,true)
- _label(energy,"可用能量",Vector2(0,94),Vector2(132,26),15,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
+ _icon_button(battle_root,"fast-forward","切换快速结算",Vector2(1490,760),Vector2(62,44),_toggle_fast)
+ deck_button=_icon_button(battle_root,"layers","抽牌堆",Vector2(75,788),Vector2(121,55),func():_zone("draw"),"0")
+ discard_button=_icon_button(battle_root,"archive-restore","弃牌堆 · 牌库耗尽后洗回",Vector2(75,851),Vector2(121,55),func():_zone("discard"),"0")
+ exhaust_button=_icon_button(battle_root,"flame","消耗区 · 本场战斗不再抽到",Vector2(75,914),Vector2(121,55),func():_zone("exhaust"),"0")
+ var energy=TextureRect.new();energy.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;energy.texture=FantasySkin.texture("orb");energy.position=Vector2(108,682);energy.size=Vector2(88,88);energy.mouse_filter=Control.MOUSE_FILTER_IGNORE;battle_root.add_child(energy)
+ energy_label=_label(energy,"3",Vector2(0,9),Vector2(88,67),36,Color("e8ffff"),HORIZONTAL_ALIGNMENT_CENTER,true)
+ energy.mouse_filter=Control.MOUSE_FILTER_PASS;energy.tooltip_text="可用能量"
  cast_button=_button(battle_root,"施放",Vector2(1085,675),Vector2(213,47),_cast_selected,true);cast_button.visible=false
  mode_button=_button(battle_root,"护甲 / 修复",Vector2(1085,726),Vector2(213,38),_toggle_mode);mode_button.visible=false
  hand_root=Control.new();hand_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);hand_root.mouse_filter=Control.MOUSE_FILTER_IGNORE;hand_root.z_index=15;battle_root.add_child(hand_root)
@@ -202,51 +229,55 @@ func _update_battle()->void:
  phase_label.text=""
  end_button.disabled=busy or b.phase!="player" or b.paused
  end_button.text="连锁暂停" if b.paused else "敌方行动" if b.phase!="player" else "结束回合"
- deck_button.text="牌库  %s"%b.draw.size();discard_button.text="弃牌  %s"%b.discard.size();exhaust_button.text="消耗  %s"%b.exhaust.size()
- last_log.text="\n\n".join(b.log.slice(0,4).map(func(x):return str(x.text))) if b.log.size()>0 else "等待第一张牌…"
+ _set_icon_count(deck_button,str(b.draw.size()));_set_icon_count(discard_button,str(b.discard.size()));_set_icon_count(exhaust_button,str(b.exhaust.size()))
  if not units.has("self"):
-  var hero=Unit.new();hero.setup(_unit_state(true),"self",portraits,font,true);hero.position=Vector2(720,480);hero.pressed.connect(_target_clicked);battle_root.add_child(hero);units["self"]=hero
+  var hero=Unit.new();hero.setup(_unit_state(true),"self",portraits,font,true);hero.position=Vector2(645,288);hero.scale=Vector2.ONE*0.70;hero.pressed.connect(_target_clicked);battle_root.add_child(hero);units["self"]=hero
  else:units.self.update_data(_unit_state(true))
+ units.self.reduced=fx.reduced
  var alive=b.enemies.filter(func(e):return e.hp>0)
  for i in range(alive.size()):
-  var e=alive[i];var p=Vector2(800+(i-(alive.size()-1)/2.0)*244-94,249)
+  var e=alive[i];var p=Vector2(645,10) if alive.size()==1 else Vector2(490+i*310,10)
   if not units.has(e.id):
    var u=Unit.new();u.setup(e,e.id,portraits,font);u.position=p;u.pressed.connect(_target_clicked);battle_root.add_child(u);units[e.id]=u
-   var intent=_panel(battle_root,p+Vector2(-25,-56),Vector2(238,47),0.95,Color("957454"))
-   var il=_label(intent,"",Vector2(7,1),Vector2(224,45),15,Color("f3c59d"),HORIZONTAL_ALIGNMENT_CENTER);il.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;intent_nodes[e.id]=intent
+   var intent=Control.new();intent.position=p+Vector2(45,-39);intent.size=Vector2(216,36);intent.mouse_filter=Control.MOUSE_FILTER_PASS;battle_root.add_child(intent)
+   var il=_label(intent,"",Vector2(0,0),Vector2(216,36),15,Color("f3c59d"),HORIZONTAL_ALIGNMENT_CENTER);intent_nodes[e.id]=intent
   else:units[e.id].update_data(e)
-  intent_nodes[e.id].get_child(0).text=game.intent_text(e)
+  units[e.id].reduced=fx.reduced
+  units[e.id].scale=Vector2.ONE*0.65
+  units[e.id].position=p
+  intent_nodes[e.id].tooltip_text=game.intent_text(e)
+  intent_nodes[e.id].get_child(0).text=""
  for id in units.keys():
   if id!="self" and not alive.any(func(e):return e.id==id):
    units[id].queue_free();units.erase(id)
    if intent_nodes.has(id):intent_nodes[id].queue_free();intent_nodes.erase(id)
  for i in range(b.objects.size()):
-  var o=b.objects[i];var pos=Vector2(1100,484+i*136)
+  var o=b.objects[i];var pos=Vector2(1000,392) if b.objects.size()==1 else Vector2(410+i*590,392)
   if not object_nodes.has(o.id):
-   var node=_panel(battle_root,pos,Vector2(239,118),0.79,Color("8c9b8f"));node.mouse_filter=Control.MOUSE_FILTER_STOP;node.gui_input.connect(_object_input.bind(o.id));object_nodes[o.id]=node
-  var node:Panel=object_nodes[o.id]
-  for c in node.get_children():c.queue_free()
-  var art=TextureRect.new();art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.texture=_atlas(spells,int(o.art),4,2);art.position=Vector2(10,12);art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.size=Vector2(71,87);art.mouse_filter=Control.MOUSE_FILTER_IGNORE;node.add_child(art)
-  _label(node,str(o.name),Vector2(91,7),Vector2(138,30),17,PALE)
-  node.set_meta("visual_state",o.duplicate(true))
-  node.set_meta("hp_label",_label(node,"已击碎" if o.dead else "耐久 %d / %d"%[o.hp,o.maxHp],Vector2(91,38),Vector2(138,24),14,CYAN))
-  node.set_meta("block_label",_label(node,"护甲 %d · 充能 %d"%[o.block,o.charges],Vector2(91,61),Vector2(138,25),12,MUTED))
-  _label(node,"点击查看 / 选择为目标",Vector2(91,90),Vector2(138,20),11,MUTED)
-  node.modulate=Color(0.55,0.58,0.61,0.6) if o.dead else Color.WHITE
+   var prop=BoardProp.new();prop.setup(o,font);prop.gui_input.connect(_object_input.bind(o.id));battle_root.add_child(prop);object_nodes[o.id]=prop
+  var node=object_nodes[o.id]
+  node.position=pos
+  node.reduced=fx.reduced;node.update_data(o)
+  node.tooltip_text="%s · 敌我共用\n%s\n耐久 %d · 护甲 %d · 充能 %d\n空手点击可互动，不消耗资源；出牌才能造成伤害。"%[o.name,game.db.object_text(o,int(game.s.run.chapter)),o.hp,o.block,o.charges]
  for i in range(slot_nodes.size()):
   var node:Panel=slot_nodes[i]
   for c in node.get_children():c.queue_free()
   var binding=b.slots[i]
   if binding==null:
-   _label(node,"＋",Vector2(14,10),Vector2(44,55),36,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
-   _label(node,"安装规则 %s"%(i+1),Vector2(71,13),Vector2(161,30),19,PALE)
-   _label(node,"拖入手牌 / 选牌后点击",Vector2(17,66),Vector2(215,25),13,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
+   FantasySkin.icon(node,"sparkles",Rect2(103,38,40,40),0.3)
+   node.add_theme_stylebox_override("panel",FantasySkin.panel(true,Color(0.69,0.70,0.67)))
+   node.tooltip_text="律令槽 · 拖入手牌以安装规则"
   else:
+   node.add_theme_stylebox_override("panel",FantasySkin.panel(true))
    var art=TextureRect.new();art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.texture=_atlas(spells,int(game.db.info(binding.card).art),4,2);art.position=Vector2(9,10);art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.size=Vector2(48,56);art.mouse_filter=Control.MOUSE_FILTER_IGNORE;node.add_child(art)
    var tr=game.db.triggers.filter(func(t):return t.id==binding.trigger)[0]
    _label(node,str(tr.name),Vector2(67,8),Vector2(167,24),13,CYAN)
    _label(node,str(game.db.info(binding.card).name),Vector2(67,32),Vector2(170,29),20,PALE)
-   _label(node,"%d 能量 · 响应 %d 次%s"%[maxi(1,int(game.db.info(binding.card).cost)),binding.fires," · 已停用" if not binding.enabled else ""],Vector2(12,73),Vector2(225,24),12,MUTED)
+   FantasySkin.icon(node,"zap",Rect2(70,81,15,15));FantasySkin.icon(node,"repeat-2",Rect2(137,81,15,15))
+   _label(node,str(maxi(1,int(game.db.info(binding.card).cost))),Vector2(89,75),Vector2(39,25),13,MUTED)
+   _label(node,str(binding.fires),Vector2(157,75),Vector2(57,25),13,MUTED)
+   node.modulate=Color.WHITE if binding.enabled else Color(0.6,0.6,0.6)
+   node.tooltip_text="%s\n每次响应消耗 %d 能量 · 已响应 %d 次\n点击管理规则"%[tr.text,maxi(1,int(game.db.info(binding.card).cost)),binding.fires]
  _sync_hand()
  _sync_enemy_hand()
  var selected=_selected_card()
@@ -254,12 +285,11 @@ func _update_battle()->void:
   units[id].highlighted=not selected.is_empty() and not busy and game.valid_target(selected,id,selected_mode) and game.target_kind(selected,selected_mode)!="none";units[id].queue_redraw()
  for id in object_nodes:
   var valid=not selected.is_empty() and not busy and game.valid_target(selected,id,selected_mode) and game.target_kind(selected,selected_mode)!="none"
-  object_nodes[id].add_theme_stylebox_override("panel",_style(Color(0.035,0.075,0.11,0.83),CYAN if valid else Color("8c9b8f"),8,2 if valid else 1))
+  object_nodes[id].highlighted=valid;object_nodes[id].queue_redraw()
  cast_button.visible=not selected.is_empty() and game.target_kind(selected,selected_mode)=="none" and not busy
  if cast_button.visible:cast_button.text="施放 · %s"%game.db.info(selected).name
  mode_button.visible=not selected.is_empty() and selected.id=="C28" and not busy
- hint_label.text="正在结算…" if busy else "拖拽卡牌到目标，或点击选牌后施放；拖入左侧空槽可安装规则。"
- if not selected.is_empty() and not busy:hint_label.text="%s · 出牌 %s 能量 · 安装 %s 能量"%[game.db.info(selected).name,game.normal_cost(selected),maxi(1,int(game.db.info(selected).cost))]
+ hint_label.text=""
  if b.paused:call_deferred("_chain_pause")
 
 func _sync_hand()->void:
@@ -318,6 +348,12 @@ func _hover_hand()->void:
  if not changed_focus and not repair_hover:return
  if changed_focus and not previous.is_empty() and cards.has(previous):fx.card_hover(cards[previous],false)
  if changed_focus and not next.is_empty() and cards.has(next):fx.card_hover(cards[next],true)
+ if is_instance_valid(inspect_box):
+  inspect_box.visible=not next.is_empty() and cards.has(next)
+  if inspect_box.visible:
+   var d=cards[next].definition
+   inspect_name.text=str(d.name);inspect_kind.text="%s  /  %d 能量"%[{"attack":"攻击","defense":"防御","skill":"技巧"}.get(d.get("type"),"技巧"),d.get("cost",0)]
+   inspect_text.text=str(d.get("text",""))+("\n\n消耗" if d.get("exhaust",false) else "")
  _layout_hand()
 
 func _drag_gap(point:Vector2)->int:
@@ -328,11 +364,12 @@ func _drag_gap(point:Vector2)->int:
 
 func _build_enemy_hand()->void:
  enemy_hand_root=Control.new();enemy_hand_root.mouse_filter=Control.MOUSE_FILTER_IGNORE;enemy_hand_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);enemy_hand_root.z_index=9;battle_root.add_child(enemy_hand_root)
- enemy_name_label=_label(battle_root,"对手手牌",Vector2(393,103),Vector2(268,26),16,GOLD)
- enemy_energy_label=_label(battle_root,"",Vector2(1052,111),Vector2(284,30),17,Color("e5b79c"))
- enemy_deck_button=_button(battle_root,"牌组",Vector2(405,144),Vector2(145,38),func():_enemy_zone("deck"))
- enemy_discard_button=_button(battle_root,"弃牌",Vector2(1090,155),Vector2(151,37),func():_enemy_zone("discard"))
- _label(battle_root,"点击敌人可切换查看",Vector2(405,183),Vector2(213,22),12,MUTED)
+ enemy_name_label=_label(battle_root,"",Vector2(393,103),Vector2(268,26),16,GOLD)
+ FantasySkin.icon(battle_root,"zap",Rect2(1109,106,19,19))
+ enemy_energy_label=_label(battle_root,"",Vector2(1136,97),Vector2(55,36),17,Color("e5b79c"))
+ enemy_energy_label.tooltip_text="对手行动能量";enemy_energy_label.mouse_filter=Control.MOUSE_FILTER_PASS
+ enemy_deck_button=_icon_button(battle_root,"layers","对手牌组",Vector2(1100,148),Vector2(88,40),func():_enemy_zone("deck"),"0")
+ enemy_discard_button=_icon_button(battle_root,"archive-restore","对手弃牌堆",Vector2(1100,199),Vector2(88,40),func():_enemy_zone("discard"),"0")
 
 func _enemy_focus()->Dictionary:
  if not game.s.get("battle"):return {}
@@ -344,7 +381,7 @@ func _enemy_focus()->Dictionary:
 
 func _enemy_center(index:int,count:int)->Vector2:
  var offset=float(index)-(count-1)/2.0
- return Vector2(815+offset*61,147+pow(offset/maxf(1,(count-1)/2.0),2)*5)
+ return Vector2(800+offset*46,51+pow(offset/maxf(1,(count-1)/2.0),2)*5)
 
 func _enemy_definition(card:Dictionary,enemy:Dictionary)->Dictionary:
  var definition=game.enemy_card_info(card,enemy).duplicate(true);definition.enemy=true;return definition
@@ -358,11 +395,12 @@ func _sync_enemy_hand(snapshot:Dictionary={},new_cards:Array=[])->void:
   enemy_hand_views.clear();focused_enemy_id=str(enemy.id);enemy_layout_signature=""
  var hand:Array=enemy.get("hand",[]);var ids=hand.map(func(c):return str(c.uid))
  var draw_ids=new_cards.map(func(c):return str(c.uid))
- enemy_name_label.text="%s · 手牌 %d"%[enemy.name,hand.size()]
- if intent_nodes.has(str(enemy.id)):intent_nodes[str(enemy.id)].get_child(0).text=game.intent_text(enemy)
- enemy_energy_label.text="行动能量  %d / %d"%[enemy.get("energy",3),enemy.get("max_energy",3)]
- enemy_deck_button.text="牌库 %d / 共 %d"%[enemy.get("draw",[]).size(),enemy.get("deck",[]).size()]
- enemy_discard_button.text="弃牌  %d"%enemy.get("discard",[]).size()
+ enemy_name_label.text=""
+ if intent_nodes.has(str(enemy.id)):intent_nodes[str(enemy.id)].tooltip_text=game.intent_text(enemy)
+ enemy_energy_label.text=str(int(enemy.get("energy",3)))
+ _set_icon_count(enemy_deck_button,str(enemy.get("draw",[]).size()))
+ _set_icon_count(enemy_discard_button,str(enemy.get("discard",[]).size()))
+ enemy_deck_button.tooltip_text="%s · 牌库 %d / 共 %d\n点击查看整套牌组，不公开隐藏手牌"%[enemy.name,enemy.get("draw",[]).size(),enemy.get("deck",[]).size()]
  enemy_deck_button.disabled=busy;enemy_discard_button.disabled=busy
  for id in enemy_hand_views.keys():
   if not id in ids:enemy_hand_views[id].queue_free();enemy_hand_views.erase(id)
@@ -374,14 +412,14 @@ func _sync_enemy_hand(snapshot:Dictionary={},new_cards:Array=[])->void:
   var card=hand[i];var id=str(card.uid);var center=_enemy_center(i,hand.size());var fresh=not enemy_hand_views.has(id)
   if fresh:
    var view=Card.new();view.interactive=false;view.setup(card,_enemy_definition(card,enemy),spells,font);view.set_face_down(true);view.pivot_offset=view.size/2;view.mouse_filter=Control.MOUSE_FILTER_IGNORE
-   view.scale=Vector2.ONE*0.315;view.position=center-view.size/2;enemy_hand_root.add_child(view);enemy_hand_views[id]=view
+   view.scale=Vector2.ONE*0.27;view.position=center-view.size/2;enemy_hand_root.add_child(view);enemy_hand_views[id]=view
   var view=enemy_hand_views[id];view.z_index=i
   var angle=deg_to_rad((float(i)-(hand.size()-1)/2.0)*3.4)
   if view.has_meta("hand_tween"):
    var old=view.get_meta("hand_tween")
    if old is Tween and old.is_valid():old.kill()
   if id in draw_ids:
-   view.position=Vector2(477,146)-view.size/2;view.rotation=-0.23;view.modulate.a=0.1
+   view.position=enemy_deck_button.get_global_rect().get_center()-view.size/2;view.rotation=-0.23;view.modulate.a=0.1
    var delay=deal_order*0.075;deal_order+=1
    var tween=view.create_tween().set_parallel(true);view.set_meta("hand_tween",tween)
    tween.tween_property(view,"position",center-view.size/2,0.38).set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -436,11 +474,8 @@ func _set_visual_values(event:Dictionary)->void:
   if event.has("hp_after"):state.hp=event.hp_after
   if event.has("block_after"):state.block=event.block_after
   if event.type=="shield":state.block=event.get("new_value",state.get("block",0))
-  node.set_meta("visual_state",state)
-  var hp_label=node.get_meta("hp_label",null);var block_label=node.get_meta("block_label",null)
-  if is_instance_valid(hp_label):hp_label.text="已击碎" if int(state.get("hp",0))<=0 else "耐久 %d / %d"%[state.hp,state.maxHp]
-  if is_instance_valid(block_label):block_label.text="护甲 %d · 充能 %d"%[state.get("block",0),state.get("charges",0)]
- if id=="self" and event.has("hp_after") and is_instance_valid(header_hp):header_hp.text="生命 %d / %d"%[event.hp_after,game.s.run.maxHp]
+  node.update_data(state)
+ if id=="self" and event.has("hp_after") and is_instance_valid(header_hp):header_hp.text=str(int(event.hp_after))
 
 
 func _atlas(texture:Texture2D,index:int,cols:int,rows:int)->AtlasTexture:
@@ -457,6 +492,7 @@ func _selected_card()->Dictionary:
 
 func _card_pressed(uid:String)->void:
  if busy or is_instance_valid(current_modal):return
+ ignore_left_release=false
  selected_uid=uid;selected_binding="";selected_mode="block"
  if cards.has(uid):fx.grab_card(cards[uid])
  _update_battle()
@@ -478,9 +514,11 @@ func _drag_move(uid:String,point:Vector2)->void:
   if gap!=drag_insert_index:drag_insert_index=gap;_layout_hand()
 
 func _card_release(_uid:String,_point:Vector2)->void:
+ if ignore_left_release:ignore_left_release=false;return
  if not dragged_uid.is_empty():_end_drag()
 
 func _end_drag()->void:
+ if busy or is_instance_valid(current_modal) or not game.s.get("battle") or game.s.battle.phase!="player":_cancel_selection();return
  var uid=dragged_uid;dragged_uid=""
  if not cards.has(uid):return
  cards[uid].end_drag()
@@ -490,7 +528,7 @@ func _end_drag()->void:
    _layout_hand();_install_dialog(i);return
  var target=_target_at(point);var c=_selected_card()
  if not target.is_empty() and game.valid_target(c,target,selected_mode):_target_clicked(target)
- elif game.target_kind(c,selected_mode)=="none" and point.y<668:_cast_selected()
+ elif not c.is_empty() and game.target_kind(c,selected_mode)=="none" and Rect2(350,205,982,446).has_point(point):_cast_selected()
  elif insertion>=0:
   var state=game.s.battle;state.hand.erase(c);state.hand.insert(clampi(insertion,0,state.hand.size()),c)
   selected_uid="";hovered_uid="";cards[uid].set_selected(false);cards[uid].hover=false
@@ -503,25 +541,46 @@ func _target_at(point:Vector2)->String:
  for id in units:
   if units[id].get_global_rect().has_point(point):return id
  for id in object_nodes:
-  if object_nodes[id].get_global_rect().has_point(point):return id
+  if object_nodes[id].contains_global(point):return id
  return ""
 
 func _input(event:InputEvent)->void:
+ if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT and event.pressed:
+  _cancel_or_close();get_viewport().set_input_as_handled();return
  if event is InputEventKey and event.pressed and not event.echo:
   if event.keycode==KEY_F11:
    var mode=DisplayServer.window_get_mode();DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if mode==DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN);get_viewport().set_input_as_handled();return
-  if is_instance_valid(current_modal):return
   if event.keycode==KEY_ESCAPE:
-   if busy:return
-   if not dragged_uid.is_empty() and cards.has(dragged_uid):cards[dragged_uid].end_drag();dragged_uid="";drag_insert_index=-1
-   selected_uid="";selected_binding="";_refresh();return
+   _cancel_or_close();get_viewport().set_input_as_handled();return
+  if is_instance_valid(current_modal) or not dragged_uid.is_empty():return
   if not at_title and game.s.screen=="battle" and not busy:
    if event.keycode>=KEY_1 and event.keycode<=KEY_9:
     var i=event.keycode-KEY_1
     if i<game.s.battle.hand.size():_card_pressed(str(game.s.battle.hand[i].uid))
    if event.keycode==KEY_SPACE:_perform(func():await game.end_turn())
    if event.keycode==KEY_ENTER:_cast_selected()
- if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and not dragged_uid.is_empty():_end_drag()
+ if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed:
+  if ignore_left_release:ignore_left_release=false;get_viewport().set_input_as_handled();return
+  if not dragged_uid.is_empty():_end_drag()
+
+func _cancel_selection()->void:
+ ignore_left_release=true
+ for card in cards.values():
+  if is_instance_valid(card):card.force_release();card.set_selected(false);card.hover=false
+ dragged_uid="";selected_uid="";selected_binding="";hovered_uid="";drag_insert_index=-1
+ if is_instance_valid(fx):fx.clear_aim()
+ if game and not at_title and game.s.screen=="battle":_update_battle()
+
+func _cancel_or_close()->void:
+ if is_instance_valid(current_modal):
+  if current_modal.get_meta("closable",true):
+   if choice_waiting:choice_finished.emit([])
+   _close_modal();_cancel_selection()
+  return
+ if not busy:_cancel_selection()
+
+func _notification(what:int)->void:
+ if what==NOTIFICATION_APPLICATION_FOCUS_OUT and game and not busy:_cancel_selection()
 
 func _pointer()->Vector2:
  return showcase_pointer if showcase and showcase_pointer.is_finite() else get_global_mouse_position()
@@ -543,7 +602,7 @@ func _process(delta:float)->void:
  else:fx.clear_aim()
 
 func _target_clicked(id:String)->void:
- if busy:return
+ if busy or is_instance_valid(current_modal):return
  var c=_selected_card()
  if c.is_empty():
   if id!="self":focused_enemy_id=id;enemy_layout_signature="";_sync_enemy_hand()
@@ -568,24 +627,24 @@ func _slot_input(event:InputEvent,index:int)->void:
   if game.s.battle.slots[index]==null:_install_dialog(index)
   else:_rule_dialog(index)
 func _object_input(event:InputEvent,id:String)->void:
- if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not busy:
+ if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not busy and not is_instance_valid(current_modal):
   if not _selected_card().is_empty():_target_clicked(id)
-  else:
-   var obj=game.s.battle.objects.filter(func(o):return o.id==id)[0]
-   _info(obj.name,game.db.object_text(obj,int(game.s.run.chapter))+"\n\n物件库存由双方共享。给予护甲可保护它，护甲持续到被消耗或节点结束。")
+  elif object_nodes.has(id) and object_nodes[id].poke():
+   fx.sound(object_nodes[id].sound_cue(),object_nodes[id].reaction_count)
 
 func _perform(action:Callable)->void:
  if busy:return
  busy=true;_set_header_busy();fx.clear_aim();chain_count=0
+ if is_instance_valid(inspect_box):inspect_box.visible=false
  if game.s.screen=="battle":_update_battle()
  await action.call()
  busy=false;selected_uid="";selected_binding="";dragged_uid="";hovered_uid="";outgoing_uid=""
  game.save_game();_refresh()
 
 func _anchor(id:String)->Vector2:
- if units.has(id):return units[id].global_position+units[id].size*Vector2(0.5,0.35)
- if object_nodes.has(id):return object_nodes[id].global_position+object_nodes[id].size/2
- if id=="energy":return Vector2(162,700)
+ if units.has(id):return units[id].get_global_transform()*(units[id].size*Vector2(0.5,0.35))
+ if object_nodes.has(id):return object_nodes[id].target_center()
+ if id=="energy":return Vector2(152,726)
  return Vector2(800,435)
 
 func _present(e:Dictionary)->void:
@@ -610,6 +669,7 @@ func _present(e:Dictionary)->void:
   var index=int(e.get("slot",0));var from=Vector2(189,290+maxi(0,index)*115)
   if index>=0 and index<slot_nodes.size():fx.pulse(slot_nodes[index],CYAN)
   fx.sound("rule",chain_count)
+  fx.rule_thread(from,_anchor(str(e.target)),CYAN)
   await fx.projectile(from,_anchor(str(e.target)),_effect_style(game.db.info(e.card)),0.08 if chain_count>8 or fx.fast else 0.22)
  elif kind=="enemy_draw":
   if game.s.screen!="battle":return
@@ -625,7 +685,7 @@ func _present(e:Dictionary)->void:
    var original=enemy_hand_views[str(card.uid)];from=original.get_global_transform()*(original.size/2);scale_from=original.scale;angle=original.rotation
   var ghost=Card.new();ghost.interactive=false;ghost.setup(card,definition,spells,font);ghost.set_face_down(true);ghost.pivot_offset=ghost.size/2;ghost.scale=scale_from;ghost.rotation=angle;fx.add_child(ghost);ghost.position=from-ghost.size/2
   active_enemy_ghost=ghost;focused_enemy_id=str(e.enemy.id);_sync_enemy_hand(e.enemy)
-  var center=Vector2(495,423)
+  var center=Vector2(995,352)
   await fx.enemy_reveal(ghost,from,center)
   var target=str(e.target);var style=_effect_style(definition)
   if definition.type=="attack":await fx.actor_strike(units[str(e.enemy.id)],_anchor(target),style)
@@ -633,7 +693,7 @@ func _present(e:Dictionary)->void:
    await fx.projectile(center,_anchor(target),style,0.27 if not fx.fast else 0.09)
    if int(definition.get("strength",0))>0:fx.float_text("力量 +%d"%definition.strength,_anchor(str(e.enemy.id)),GOLD)
  elif kind=="enemy_discard":
-  if is_instance_valid(active_enemy_ghost):await fx.card_flight(active_enemy_ghost,Vector2(1165,174),"enemy")
+  if is_instance_valid(active_enemy_ghost):await fx.card_flight(active_enemy_ghost,enemy_discard_button.get_global_rect().get_center(),"enemy")
   active_enemy_ghost=null
   _sync_enemy_hand(e.enemy)
   fx.pulse(enemy_discard_button,GOLD)
@@ -672,12 +732,13 @@ func _present(e:Dictionary)->void:
 func _modal(title:String,small:bool=false,closable:bool=true)->Control:
  _close_modal()
  var shade=ColorRect.new();shade.color=Color(0.015,0.023,0.035,0.83);shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);shade.mouse_filter=Control.MOUSE_FILTER_STOP;modal_root.add_child(shade);current_modal=shade
+ shade.set_meta("closable",closable)
  var p=_panel(shade,Vector2(300,155) if small else Vector2(230,113),Vector2(1000,665) if small else Vector2(1140,785),0.99,GOLD);p.mouse_filter=Control.MOUSE_FILTER_STOP
  _label(p,title,Vector2(30,16),Vector2(p.size.x-105,50),27,GOLD,HORIZONTAL_ALIGNMENT_LEFT,true)
  if closable:_button(p,"×",Vector2(p.size.x-70,20),Vector2(42,42),func():
   if choice_waiting:choice_finished.emit([])
   _close_modal())
- p.pivot_offset=p.size/2;p.scale=Vector2(.95,.95);p.modulate.a=0.0
+ p.pivot_offset=p.size/2;p.scale=Vector2.ONE if fx.reduced else Vector2(.95,.95);p.modulate.a=0.0
  var tw=create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT);tw.tween_property(p,"scale",Vector2.ONE,.2);tw.tween_property(p,"modulate:a",1.0,.2)
  return p
 func _close_modal()->void:
@@ -695,7 +756,7 @@ func _choose(data:Dictionary)->Array:
  var grid=GridContainer.new();grid.columns=5;grid.add_theme_constant_override("h_separation",32);grid.add_theme_constant_override("v_separation",24);scroll.add_child(grid)
  var confirm=_button(p,"确认选择",Vector2(833,719),Vector2(240,46),func():choice_finished.emit(chosen.duplicate()),true);confirm.disabled=int(data.min)>0
  for c in data.cards:
-  var v=Card.new();v.setup(c,game.db.info(c),spells,font);grid.add_child(v)
+  var v=Card.new();v.drag_enabled=false;v.setup(c,game.db.info(c),spells,font);grid.add_child(v)
   v.pressed.connect(func(uid):
    if uid in chosen:chosen.erase(uid)
    elif chosen.size()<int(data.max):chosen.append(uid)
@@ -877,3 +938,44 @@ func _showcase()->void:
  if game.s.screen=="battle":await _perform(func():await game.end_turn())
  await get_tree().create_timer(1.5).timeout
  print("SHOWCASE_COMPLETE fps=",Engine.get_frames_per_second())
+
+func _verify_build()->void:
+ # Explicit isolated-save QA mode also works inside the exported executable.
+ showcase=true;showcase_pointer=Vector2(1590,985)
+ var folder=OS.get_executable_path().get_base_dir()+"/verification"
+ for arg in OS.get_cmdline_user_args():
+  if arg.begins_with("--verify-output="):folder=arg.trim_prefix("--verify-output=")
+ DirAccess.make_dir_recursive_absolute(folder)
+ await _verify_capture(folder,"title")
+ await _screen_action("practice",[])
+ await _verify_capture(folder,"battle")
+ var prop=object_nodes.get("object0")
+ if not is_instance_valid(prop) or prop.sprite==null:
+  push_error("BUILD_VERIFY_FAILED: physical object asset missing");get_tree().quit(3);return
+ var before=game.snapshot()
+ var tap=InputEventMouseButton.new();tap.button_index=MOUSE_BUTTON_LEFT;tap.pressed=true
+ _object_input(tap,"object0")
+ if prop.reaction_count!=1 or game.snapshot()!=before:
+  push_error("BUILD_VERIFY_FAILED: object reaction changed combat state");get_tree().quit(4);return
+ await _verify_capture(folder,"prop-click")
+ var attack=_show_uid("C01")
+ await _perform(func():await game.play(attack,"object0","block",false))
+ if not prop.dead or int(game.s.battle.block)!=5:
+  push_error("BUILD_VERIFY_FAILED: object break lost its combat reward");get_tree().quit(5);return
+ await _verify_capture(folder,"prop-destroyed")
+ await _perform(func():await game.end_turn())
+ if game.s.screen!="battle" or int(game.s.battle.turn)!=2:
+  push_error("BUILD_VERIFY_FAILED: enemy turn did not return to player");get_tree().quit(2);return
+ await _verify_capture(folder,"enemy-turn")
+ _home();game.new_run("balanced",false,101);at_title=false;_refresh()
+ await _verify_capture(folder,"map")
+ print("BUILD_VERIFY_OK: title, practice, physical object click, object break reward, enemy turn, route map; fps=",Engine.get_frames_per_second())
+ fx.cleanup()
+ await get_tree().create_timer(0.25).timeout
+ get_tree().quit(0)
+
+func _verify_capture(folder:String,label:String)->void:
+ await get_tree().create_timer(0.6).timeout
+ await RenderingServer.frame_post_draw
+ var result=get_viewport().get_texture().get_image().save_png(folder+"/"+label+".png")
+ if result!=OK:push_error("BUILD_CAPTURE_FAILED: "+label)

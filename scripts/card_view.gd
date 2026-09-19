@@ -1,4 +1,5 @@
 extends Control
+const FantasySkin = preload("res://scripts/material_skin.gd")
 signal pressed(uid)
 signal hover_changed(uid, active)
 signal drag_started(uid)
@@ -10,6 +11,7 @@ var definition: Dictionary = {}
 var art_texture: Texture2D
 var card_font: Font
 var interactive := true
+var drag_enabled := true
 var selected := false
 var available := true
 var hover := false
@@ -100,9 +102,9 @@ func move_to(point: Vector2, angle: float, animated: bool=true, delay: float=-1.
  _layout_active=true
  if drag_active: return
  var raised=hover or selected
- var destination=point-Vector2(0,57 if raised else 0)
+ var destination=point-Vector2(0,86 if raised else 0)
  var target_angle=0.0 if raised else angle
- var target_scale=Vector2.ONE*(1.075 if raised else 1.0)
+ var target_scale=Vector2.ONE*(1.16 if raised else 1.0)
  var same=_spring_active and destination.is_equal_approx(_destination) and is_equal_approx(target_angle,_destination_angle) and target_scale.is_equal_approx(_destination_scale)
  _destination=destination
  _destination_angle=target_angle
@@ -262,7 +264,7 @@ func _gui_input(event: InputEvent) -> void:
    if drag_active: end_drag()
    _press_grab_available=false
   accept_event()
- elif event is InputEventMouseMotion and _down:
+ elif event is InputEventMouseMotion and _down and drag_enabled:
   var point=get_global_mouse_position()
   if not drag_active and point.distance_to(_press_point)>8.0:
    begin_drag(point)
@@ -332,39 +334,33 @@ func _draw() -> void:
   for j in range(4,0,-1):
    var col=glow;col.a=0.035*(5-j)
    _box(Rect2(-j*2,-j*2,w+j*4,h+j*4),Color.TRANSPARENT,col,2,12)
- _box(Rect2(0,0,w,h),Color("34221f") if enemy else Color("1b2431"),frame_color,2,10)
- _box(Rect2(4,4,w-8,h-8),Color("281f25") if enemy else Color("122135"),Color("90704f") if enemy else Color("655d4e"),1,7)
- _box(Rect2(8,8,w-16,31),Color("342724") if enemy else Color("162132"),frame_color if enemy else Color("a58c60"),1,3)
+ draw_texture_rect(FantasySkin.texture("parchment"),Rect2(0,0,w,h),false,Color(1,0.90,0.83) if enemy else Color.WHITE)
+ draw_style_box(FantasySkin.button(false,"normal"),Rect2(24,9,w-40,32))
  if art_texture:
-  draw_texture_rect_region(art_texture,Rect2(9,41,w-18,96),_art_region)
-  draw_rect(Rect2(9,117,w-18,20),Color(0.04,0.08,0.13,0.5))
- draw_line(Vector2(8,139),Vector2(w-8,139),frame_color,1.5,true)
- _box(Rect2(8,142,w-16,h-169),Color("d4c7aa"),Color("806b49"),1,3)
- for n in range(9):
-  draw_line(Vector2(10,145+n*10),Vector2(w-10,145+n*10),Color(0.26,0.2,0.12,0.025),1)
- draw_circle(Vector2(14,17),21,Color("16283a"))
- draw_arc(Vector2(14,17),20,0,TAU,40,Color("e0c490"),2.5,true)
- draw_circle(Vector2(14,17),16,(Color("884c36") if enemy else Color("246582")) if available else Color("434951"))
- _text(str(int(definition.get("cost",0))),Vector2(-3,26),26,Color("f3f1dc"),HORIZONTAL_ALIGNMENT_CENTER,34)
+  draw_texture_rect_region(art_texture,Rect2(14,43,w-28,92),_art_region)
+  draw_rect(Rect2(14,115,w-28,20),Color(0.04,0.04,0.04,0.64))
+  draw_rect(Rect2(14,43,w-28,92),Color("806037"),false,1.3)
+ draw_line(Vector2(19,140),Vector2(w-19,140),Color("927044"),1.2,true)
+ draw_texture_rect(FantasySkin.texture("orb"),Rect2(-8,-7,47,47),false,Color(1,0.55,0.35) if enemy else Color.WHITE if available else Color(0.6,0.6,0.6))
+ _text(str(int(definition.get("cost",0))),Vector2(-2,25),24,Color("f3f1dc"),HORIZONTAL_ALIGNMENT_CENTER,34)
  var title=str(definition.get("name",""))
- _text(title,Vector2(37,30),18,Color("c2e5d6") if card.get("up",false) else Color("eee0c5"),HORIZONTAL_ALIGNMENT_CENTER,w-46)
+ _text(title,Vector2(31,31),17,Color("b3e9be") if card.get("up",false) else Color("fff1d2"),HORIZONTAL_ALIGNMENT_CENTER,w-47)
  var types={"attack":"攻击","defense":"防御","skill":"技巧"}
- _text(("敌方 · " if enemy else "")+types.get(definition.get("type","skill"),"技巧"),Vector2(12,133),12,Color("f1e3c7"))
+ _text(("敌方 · " if enemy else "")+types.get(definition.get("type","skill"),"技巧"),Vector2(20,131),11,Color("f1e3c7"))
  var lines=_cached_text_lines
  for i in range(mini(lines.size(),5)):
-  _text(lines[i],Vector2(16,161+i*17),14,Color("292833"))
- var footer="敌方行动 · 付费后结算" if enemy else "消耗 · 可安装" if definition.get("exhaust",false) else "手动施放 / 安装规则"
- _text(footer,Vector2(9,h-11),11,Color("c3b08b"),HORIZONTAL_ALIGNMENT_CENTER,w-18)
- for pos in [Vector2(7,7),Vector2(w-7,7),Vector2(7,h-7),Vector2(w-7,h-7)]:
-  draw_colored_polygon(PackedVector2Array([pos+Vector2(0,-4),pos+Vector2(3,0),pos+Vector2(0,4),pos+Vector2(-3,0)]),frame_color)
- if not available: draw_rect(Rect2(8,41,w-16,96),Color(0,0,0,0.15))
+  _text(lines[i],Vector2(18,159+i*17),14,Color("35271a"))
+ if definition.get("exhaust",false):draw_texture_rect(load("res://assets/icons/flame.svg"),Rect2(w/2-8,h-35,16,16),false)
+ draw_circle(Vector2(w/2,h-9),3,frame_color)
+ if hover or selected:
+  for n in range(3):
+   draw_line(Vector2(10+n*3,43),Vector2(w-12,43+n*2),Color(1,0.9,0.65,0.04+shine*0.08),1,true)
+ if not available: draw_rect(Rect2(14,43,w-28,92),Color(0,0,0,0.28))
 
 func _draw_back() -> void:
  var w=card_size.x
  var h=card_size.y
- _box(Rect2(0,0,w,h),Color("111d2c"),Color("cdbb8d"),2,11)
- _box(Rect2(5,5,w-10,h-10),Color("163445"),Color("756849"),1,8)
- _box(Rect2(11,11,w-22,h-22),Color("0c1d2c"),Color("b59863"),1,5)
+ draw_style_box(FantasySkin.panel(false),Rect2(0,0,w,h))
  var center=card_size*0.5
  # Fine geometric engraving remains legible while the card flips edge-on.
  for i in range(1,8):

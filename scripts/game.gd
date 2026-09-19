@@ -307,7 +307,7 @@ func _finish_node():
 	var r = s.run
 	var n = r.node
 	if not n: return
-	r.history.append({"type":n.type,"chapter":r.chapter,"depth":r.step+1,"hp":r.hp,"id":n.id})
+	r.history.append({"type":n.type,"chapter":r.chapter,"depth":r.step+1,"hp":r.hp,"id":n.id,"branch":n.get("branch",0)})
 	r.step += 1
 	r.node = null
 	s.battle = null

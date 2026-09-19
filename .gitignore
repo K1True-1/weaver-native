@@ -4,6 +4,8 @@
 # Local exports and build output
 build/
 dist/
+artifacts/*
+!artifacts/.gdignore
 *.exe
 *.pck
 

@@ -80,6 +80,13 @@ func _process(delta: float) -> void:
 	if _effects.is_empty() and _emitters.is_empty() and not _aim_active:
 		set_process(false)
 
+func _exit_tree() -> void:
+	for player in _audio_pool:
+		if is_instance_valid(player):
+			player.stop()
+			player.stream=null
+	_audio_cache.clear()
+
 
 func _time(seconds: float) -> float:
 	return maxf(0.018, seconds * (0.28 if fast else 1.0))
@@ -231,6 +238,7 @@ func projectile(from: Vector2, to: Vector2, style: String = "arcane", duration: 
 	if reduced:
 		await _wait(0.035)
 		return
+	spell_seal(from,color,42.0)
 	if style in ["physical", "slash", "attack", "sword"]:
 		_add_effect("streak", {"from": from, "to": to, "color": color}, duration)
 		sound("slash")
@@ -339,6 +347,15 @@ func _landing_now(center: Vector2, style: String = "cast") -> void:
 	_add_effect("landing", {"pos": center, "color": color, "radius": 75.0}, 0.31)
 	_add_effect("impact_sparks", {"pos": center, "color": color, "direction": Vector2.DOWN, "amount": 6, "spread": 2.8}, 0.24)
 	burst(center, color, 7, 0.38)
+	spell_seal(center,color,105.0 if style=="install" else 82.0)
+
+func spell_seal(center: Vector2, color: Color, radius: float = 84.0) -> void:
+	if reduced:return
+	_add_effect("sigil",{"pos":center,"color":color,"radius":radius},0.72)
+
+func rule_thread(from: Vector2, to: Vector2, color: Color) -> void:
+	if reduced:return
+	_add_effect("weave",{"from":from,"to":to,"color":color},0.65)
 
 
 func landing(center: Vector2, style: String = "cast") -> void:
@@ -544,6 +561,8 @@ func impact(target_node: Control, amount: Variant, kind: String = "damage") -> v
 			# One contact flash and one sound, with directional motion. A short
 			# local hit-stop keeps the target rigid before its recovery recoil.
 			sound("hit")
+			if not reduced and absf(float(amount))>=8.0:
+				_add_effect("shockwave",{"pos":center,"color":color,"radius":102.0},0.38)
 			_add_effect("flash", {"pos": center, "color": color, "radius": 38.0}, 0.09)
 			if not reduced:
 				_add_effect("impact_sparks", {"pos": center, "color": GOLD, "direction": _attack_direction, "amount": 7, "spread": 1.75}, 0.23)
@@ -742,6 +761,43 @@ func _draw() -> void:
 		var color: Color = fx.get("color", GOLD)
 		var fade := pow(1.0 - p, 1.5)
 		match fx["kind"]:
+			"sigil":
+				var pos: Vector2=fx["pos"]
+				var r: float=float(fx["radius"])*(0.65+0.35*(1.0-pow(1.0-p,3.0)))
+				draw_set_transform(pos,0,Vector2(1,0.56))
+				draw_arc(Vector2.ZERO,r,0,TAU,64,_alpha(color,fade*0.66),1.5,true)
+				draw_arc(Vector2.ZERO,r*0.83,p*0.8,TAU*0.82+p*0.8,56,_alpha(color,fade*0.48),1.2,true)
+				for i in range(12):
+					var a=TAU*i/12.0-p*0.5
+					var d=Vector2.from_angle(a)
+					draw_line(d*r*0.9,d*r*0.97,_alpha(color.lightened(0.4),fade),1.8,true)
+				for i in range(3):
+					var tri=PackedVector2Array()
+					for k in range(4):tri.append(Vector2.from_angle(k*TAU/3.0+i*TAU/9.0+p*0.16)*r*0.66)
+					draw_polyline(tri,_alpha(color,fade*0.23),1.1,true)
+				draw_set_transform(Vector2.ZERO)
+			"weave":
+				var a: Vector2=fx["from"]
+				var b: Vector2=fx["to"]
+				var bend=(a+b)*0.5+Vector2(0,-80)
+				var previous=a
+				for i in range(1,41):
+					var point=_bezier(a,bend,b,i/40.0)
+					draw_line(previous,point,_alpha(color,fade*0.13),1,true)
+					previous=point
+				for i in range(7):
+					var t=clampf(p*1.9-i*0.065,0,1)
+					var point=_bezier(a,bend,b,t)
+					_glow(point,10,color,fade*0.6)
+					draw_circle(point,2,_alpha(color.lightened(0.5),fade))
+			"shockwave":
+				var r: float=float(fx["radius"])*(0.15+0.85*sqrt(p))
+				var pos: Vector2=fx["pos"]
+				draw_arc(pos,r,-PI,PI,64,_alpha(color.lightened(0.3),fade*0.7),1.5+fade*2,true)
+				draw_arc(pos,r*0.81,-PI,PI,56,_alpha(color,fade*0.23),5*fade+1,true)
+				for i in range(9):
+					var d=Vector2.from_angle(i*TAU/9.0+0.24)
+					draw_line(pos+d*r*0.65,pos+d*r,_alpha(color,fade*0.5),1.6,true)
 			"air":
 				var a: Vector2 = fx["from"]
 				var b: Vector2 = fx["to"]
@@ -917,7 +973,7 @@ func sound(kind: String, index: int = 0) -> void:
 	player.stop()
 	player.stream = _audio_cache[kind]
 	player.pitch_scale = pow(2.0, (index % 5) / 24.0)
-	player.volume_db = -15.0 if kind == "hover" else -4.5 if kind in ["land", "hit", "break"] else -7.0
+	player.volume_db = -15.0 if kind == "hover" else -12.0 if kind.begins_with("prop_") else -4.5 if kind in ["land", "hit", "break"] else -7.0
 	player.play()
 
 
@@ -933,6 +989,8 @@ func _synthesize(kind: String) -> AudioStreamWAV:
 		duration = 0.07
 	elif kind == "land":
 		duration = 0.19
+	elif kind.begins_with("prop_"):
+		duration = 0.32
 	var samples := int(duration * rate)
 	var pcm := PackedByteArray()
 	pcm.resize(samples * 2)
@@ -950,6 +1008,18 @@ func _synthesize(kind: String) -> AudioStreamWAV:
 		var frequency := 580.0
 		var sample := 0.0
 		match kind:
+			"prop_crystal", "prop_glass":
+				frequency = 1046.5 if kind=="prop_crystal" else 783.99
+				sample = sin(TAU*frequency*t)*exp(-p*3)*0.38+sin(TAU*frequency*2.76*t)*exp(-p*8)*0.18
+			"prop_stone", "prop_wood":
+				frequency = 180.0 if kind=="prop_stone" else 260.0
+				sample = sin(TAU*frequency*t)*exp(-p*10)*0.60+noise_low*exp(-p*16)*0.25
+			"prop_water":
+				frequency = 480+900*exp(-p*8)
+				phase+=TAU*frequency/rate
+				sample = sin(phase)*exp(-p*4)*0.35+noise_low*0.17*sin(PI*p)
+			"prop_fire":
+				sample = noise_low*0.62+noise_band*exp(-p*10)*0.16+sin(TAU*120*t)*0.12
 			"grab", "flip", "draw":
 				# Short paper/leather rasp, with a subdued wooden body.
 				var click_env := exp(-p * (9.0 if kind == "grab" else 5.0))

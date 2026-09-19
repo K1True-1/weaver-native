@@ -1,4 +1,6 @@
 extends RefCounted
+const FantasySkin = preload("res://scripts/material_skin.gd")
+const RouteMap = preload("res://scripts/route_map.gd")
 
 const INK := Color("0b1321")
 const PANEL := Color("131e30")
@@ -42,7 +44,7 @@ func _style(bg: Color = PANEL, border: Color = BORDER, width: int = 1, radius: i
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(width)
-	style.set_corner_radius_all(radius)
+	style.set_corner_radius_all(mini(radius,4))
 	style.content_margin_left = 18
 	style.content_margin_right = 18
 	style.content_margin_top = 10
@@ -52,11 +54,11 @@ func _style(bg: Color = PANEL, border: Color = BORDER, width: int = 1, radius: i
 	style.shadow_offset = Vector2(0, 5)
 	return style
 
-func _panel(parent: Control, rect: Rect2, accent: Color = BORDER) -> Panel:
+func _panel(parent: Control, rect: Rect2, _accent: Color = BORDER) -> Panel:
 	var panel := Panel.new()
 	panel.position = rect.position
 	panel.size = rect.size
-	panel.add_theme_stylebox_override("panel", _style(Color(0.055, 0.085, 0.135, 0.94), accent))
+	panel.add_theme_stylebox_override("panel", FantasySkin.panel(minf(rect.size.x,rect.size.y)<150))
 	parent.add_child(panel)
 	panel.mouse_filter = Control.MOUSE_FILTER_PASS
 	return panel
@@ -99,11 +101,7 @@ func _button(parent: Control, text: String, rect: Rect2, action: String, args: A
 	button.add_theme_color_override("font_color", PALE)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color("637387"))
-	button.add_theme_stylebox_override("normal", _style(Color("314348") if primary else Color("172438"), GOLD if primary else BORDER, 2 if primary else 1))
-	button.add_theme_stylebox_override("hover", _style(Color("2b4352"), CYAN, 2))
-	button.add_theme_stylebox_override("pressed", _style(Color("0d1b2c"), GOLD, 2))
-	button.add_theme_stylebox_override("disabled", _style(Color("101a28"), Color("263243")))
-	button.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), GOLD, 2))
+	FantasySkin.apply_button(button,primary)
 	parent.add_child(button)
 	var original_position := button.position
 	button.mouse_entered.connect(func():
@@ -134,12 +132,13 @@ func _set_loadout(id: String) -> void:
 	for button: Button in _loadout_buttons:
 		if not is_instance_valid(button): continue
 		var selected: bool = str(button.get_meta("loadout_id", "")) == id
-		button.add_theme_stylebox_override("normal", _style(Color("314348") if selected else Color("172438"), GOLD if selected else BORDER, 2 if selected else 1))
+		FantasySkin.apply_button(button,selected)
 		var name_label: Label = button.get_meta("name_label")
-		name_label.text = str(button.get_meta("loadout_name")) + ("  · 已选" if selected else "  · 封存" if button.disabled else "")
+		name_label.text = str(button.get_meta("loadout_name"))
 		name_label.add_theme_color_override("font_color", GOLD if selected else PALE)
 
 func _reveal(control: Control, delay: float = 0.0, travel: float = 18.0) -> void:
+	if not _game.s.settings.get("motion",true):return
 	var destination := control.position
 	control.position.y += travel
 	control.modulate.a = 0.0
@@ -209,100 +208,100 @@ func _title() -> void:
 	var unlocks: Array = meta.get("unlocks", ["balanced"])
 	if not selected_loadout in unlocks: selected_loadout = "balanced"
 	var copy := Control.new()
-	copy.position = Vector2(85, 125)
-	copy.size = Vector2(905, 800)
+	copy.position = Vector2(106, 137)
+	copy.size = Vector2(690, 800)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_host.add_child(copy)
-	_label(copy, "THE WEAVER  /  NATIVE EDITION", Rect2(0, 0, 850, 35), 18, GOLD)
-	_label(copy, "织 律 者", Rect2(0, 36, 870, 145), 94, PALE, false, true)
-	_label(copy, "规 则 之 外", Rect2(6, 172, 790, 56), 35, GOLD, false, true)
-	_line(copy, 8, 254, 795)
-	_label(copy, "将手中的卡牌，写成世界的规则。", Rect2(8, 276, 800, 48), 26, PALE)
-	_label(copy, "每一次组装，都是连锁的起点。", Rect2(8, 323, 800, 40), 21, MUTED)
-	_label(copy, "选择起始誓约", Rect2(8, 391, 800, 30), 18, GOLD)
+	_label(copy, "A R C A N E   D E C K B U I L D E R", Rect2(4, 0, 690, 35), 15, GOLD)
+	_label(copy, "织 律 者", Rect2(-5, 35, 700, 151), 108, PALE, false, true)
+	_label(copy, "THE WEAVER", Rect2(6, 184, 650, 30), 19, GOLD)
+	_line(copy, 7, 241, 76, GOLD)
+	_label(copy, "规 则 之 外", Rect2(104, 217, 435, 48), 28, GOLD, false, true)
+	_label(copy, "将手中的卡牌，写成世界的规则。", Rect2(6, 281, 665, 49), 24, PALE)
+	_label(copy, "起 始 誓 约", Rect2(6, 414, 430, 28), 15, GOLD)
 	var index: int = 0
 	var lock_text: Dictionary = {"defense":"护甲共鸣：在 3 个不同回合触发", "discard":"主动弃牌：一局累计 8 次", "search":"筛选或索引：一局使用 4 次"}
 	for id: String in _game.db.loadouts:
 		var item: Dictionary = _game.db.loadouts[id]
 		var unlocked: bool = id in unlocks
-		var button := _button(copy, "", Rect2(8 + (index % 2) * 427, 435 + floori(index / 2.0) * 102, 412, 90), "loadout", [id], id == selected_loadout, not unlocked)
-		var name_label := _label(button, item.name + ("  · 已选" if id == selected_loadout else "" if unlocked else "  · 封存"), Rect2(18, 8, 378, 32), 22, GOLD if id == selected_loadout else PALE)
+		var button := _button(copy, "", Rect2(6 + (index % 2) * 333, 453 + floori(index / 2.0) * 95, 316, 81), "loadout", [id], false, not unlocked)
+		FantasySkin.apply_button(button,id==selected_loadout)
+		var name_label := _label(button, item.name, Rect2(30, 21, 256, 35), 21, GOLD if id == selected_loadout else PALE, true)
+		if not unlocked:FantasySkin.icon(button,"lock-keyhole",Rect2(271,30,19,19),0.65)
 		button.set_meta("loadout_id", id)
 		button.set_meta("loadout_name", str(item.name))
 		button.set_meta("name_label", name_label)
 		_loadout_buttons.append(button)
-		_label(button, item.text if unlocked else lock_text.get(id, "继续探索以解锁"), Rect2(18, 43, 378, 32), 16, MUTED)
+		button.tooltip_text="攻守兼备，自由构筑" if id=="balanced" else item.text if unlocked else lock_text.get(id, "继续探索以解锁")
 		index += 1
 	var can_continue: bool = run is Dictionary and not run.is_empty() and not run.get("finished", false) and not run.get("practice", false)
-	_button(copy, "开启冒险", Rect2(8, 665, 280, 65), "new", [selected_loadout], true)
+	_button(copy, "开 启 冒 险     →", Rect2(6, 669, 316, 65), "new", [selected_loadout], true)
+	_button(copy, "规 则 练 习", Rect2(339, 669, 316, 65), "practice")
 	if can_continue:
-		_button(copy, "继续旅程", Rect2(306, 665, 252, 65), "continue")
-		_button(copy, "规则练习", Rect2(576, 665, 264, 65), "practice")
-	else:
-		_button(copy, "规则练习", Rect2(306, 665, 270, 65), "practice")
-	_label(copy, "练习独立进行  ·  冒险进度自动保存至本机", Rect2(8, 748, 845, 35), 17, MUTED)
+		_button(copy, "继续上次旅程  →", Rect2(6, 748, 316, 43), "continue").add_theme_font_size_override("font_size",17)
 	_reveal(copy, 0.05)
-	var portrait := _panel(_host, Rect2(1060, 151, 463, 694), GOLD)
-	_atlas(portrait, _portraits, Rect2(8, 8, 447, 550), 0, 3, 2)
-	var shade := _panel(portrait, Rect2(8, 516, 447, 170), Color("29384d"))
-	_label(shade, "THE FIRST WEAVER", Rect2(24, 11, 393, 31), 16, GOLD, true)
-	_label(shade, "「律令并非牢笼，\n只是尚未改写的可能。」", Rect2(21, 48, 405, 91), 25, PALE, true, true)
-	_reveal(portrait, 0.19)
-	_label(_host, "鼠标拖曳 / 点击出牌    ·    Space 结束回合    ·    F11 全屏", Rect2(83, 941, 1430, 32), 16, MUTED)
+	_label(_host, "v0.5.0", Rect2(108, 942, 645, 30), 12, MUTED)
 
 func _map() -> void:
 	var run: Dictionary = _game.s.run
 	var chapter: int = int(run.chapter)
-	var step: int = int(run.step)
 	var chapter_data: Dictionary = _game.db.chapters[chapter]
-	var board := _panel(_host, Rect2(52, 130, 1120, 785))
-	_label(board, "CHAPTER  %02d / 03" % (chapter + 1), Rect2(35, 21, 1030, 35), 18, GOLD)
-	_label(board, chapter_data.name, Rect2(35, 64, 1030, 65), 49, PALE, false, true)
-	_label(board, chapter_data.subtitle, Rect2(37, 130, 1030, 40), 22, MUTED)
-	var labels: Array = ["遭遇", "商旅 / 遗迹", "挑战岔路", "遗迹 / 商旅", "遭遇", "宝藏 / 营地", "营地 / 宝藏", "领主"]
-	_line(board, 77, 238, 966, BORDER)
-	for i: int in range(8):
-		var color: Color = CYAN if i < step else GOLD if i == step else BORDER
-		var orb := _panel(board, Rect2(57 + i * 133, 214, 49, 49), color)
-		orb.add_theme_stylebox_override("panel", _style(Color("273b43") if i == step else Color("172338"), color, 2, 25))
-		_label(orb, "✓" if i < step else str(i + 1), Rect2(0, 0, 49, 49), 24, color, true)
-		_label(board, labels[i], Rect2(20 + i * 133, 277, 123, 38), 16, color, true)
-	_label(board, "选择下一站", Rect2(38, 348, 600, 43), 26, GOLD, false, true)
-	_label(board, "%02d / 24" % (chapter * 8 + step + 1), Rect2(858, 348, 220, 43), 20, MUTED, true)
-	var next: Array = run.get("next", [])
-	var option_width: float = 492.0 if next.size() > 1 else 1027.0
-	for i: int in range(next.size()):
-		var node: Dictionary = next[i]
-		var typ: String = node.type
-		var names: Dictionary = {"shop":"灯下的旅行商人", "event":"仍有回声的遗迹", "camp":"旅人的篝火", "treasure":"被遗忘的赠礼"}
-		var descriptions: Dictionary = {"battle":"赢得金币与三选一卡牌。", "elite":"更强的敌人，更丰厚的金币与稀有牌。", "boss":"击败领主，打破这一章的律令。", "shop":"选购卡牌与遗物，整理你的构筑。", "event":"与旧日回响相遇，选择你的际遇。", "camp":"休息、升级或删牌，为下一战准备。", "treasure":"拾取金币，再挑选一件遗物。"}
-		var symbols: Dictionary = {"battle":"Ⅰ", "elite":"Ⅱ", "boss":"Ⅲ", "shop":"◇", "event":"✦", "camp":"△", "treasure":"✧"}
-		var option := _button(board, "", Rect2(38 + i * 551, 408, option_width, 250), "enter", [node.id], typ == "boss")
-		_label(option, symbols.get(typ, "◇"), Rect2(27, 23, 63, 66), 50, GOLD, true, true)
-		_label(option, str(_game.db.node_labels.get(typ, typ)).to_upper(), Rect2(108, 26, option_width - 138, 31), 17, CYAN)
-		_label(option, str(node.get("label", names.get(typ, "前行"))), Rect2(108, 61, option_width - 137, 53), 29, PALE, false, true)
-		_label(option, descriptions.get(typ, ""), Rect2(29, 122, option_width - 57, 53), 20, MUTED)
-		_line(option, 29, 185, option_width - 58)
-		_label(option, "踏入此地    →", Rect2(30, 197, option_width - 57, 38), 21, GOLD)
-		_reveal(option, 0.12 + i * 0.1)
-	var routes: Array = _game.s.meta.get("routes", [])
-	if chapter == 1 and step == 0 and not routes.is_empty():
-		_label(board, "本章支路", Rect2(39, 698, 120, 40), 18, MUTED)
-		var all_routes: Array = ["standard"] + routes
-		for i: int in range(all_routes.size()):
-			var id: String = all_routes[i]
-			_button(board, {"standard":"镜庭旧路", "furnace":"锻炉支路", "mirror":"镜湖支路"}.get(id, id), Rect2(162 + i * 279, 693, 258, 52), "route", [id], run.get("route", "standard") == id)
-	else:
-		_label(board, str(run.get("intel", "每个节点都藏着新的物件。规则可重写，抉择会留下痕迹。")), Rect2(38, 693, 1040, 57), 18, MUTED)
+	var board := _panel(_host, Rect2(52, 130, 346, 785))
+	_label(board, "CHAPTER  %02d / 03" % (chapter + 1), Rect2(27, 20, 292, 30), 15, GOLD)
+	_label(board, chapter_data.name, Rect2(27, 62, 292, 60), 34, PALE, false, true)
+	_label(board, chapter_data.subtitle, Rect2(29, 131, 288, 59), 17, MUTED)
+	_line(board, 28, 209, 288)
+	_label(board, "%02d / 08" % (int(run.step)+1), Rect2(29, 225, 289, 32), 17, GOLD)
+	var detail := Control.new()
+	detail.position=Vector2(0,273);detail.size=Vector2(346,398);board.add_child(detail)
+	var chart := RouteMap.new()
+	chart.position=Vector2(423,111)
+	_host.add_child(chart)
+	chart.setup(run,_font,_game.s.settings.get("motion",true))
+	chart.node_selected.connect(func(node):
+		_map_detail(detail,node)
+	)
+	var next: Array=run.get("next",[])
+	if not next.is_empty():_map_detail(detail,next[0])
+	board.tooltip_text="金色节点可前往；实线为已走过的路线；淡色为后续预览。"
 	_reveal(board)
+	_reveal(chart,0.08,12)
 	_hero_sidebar(run)
+	var routes: Array=_game.s.meta.get("routes",[])
+	if chapter==1 and int(run.step)==0 and not routes.is_empty():
+		var all_routes: Array=["standard"]+routes
+		for i in range(all_routes.size()):
+			var id: String=all_routes[i]
+			_button(_host,{"standard":"镜庭旧路","furnace":"锻炉支路","mirror":"镜湖支路"}.get(id,id),Rect2(439+i*238,951,222,36),"route",[id],run.get("route","standard")==id).add_theme_font_size_override("font_size",16)
+
+func _map_detail(parent: Control, node: Dictionary) -> void:
+	for child in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()
+	var typ: String=node.type
+	var names={"shop":"灯下的旅行商人","event":"仍有回声的遗迹","camp":"旅人的篝火","treasure":"被遗忘的赠礼"}
+	var description={"battle":"赢得金币与三选一卡牌。每次遭遇都会出现可争夺的场景物件。","elite":"危险的精英守卫。战胜它，获得更丰厚的金币与稀有牌。","boss":"此章的终末守卫。打破它的律令，前往下一章。","shop":"购买法术和遗物，升级或删除卡牌。","event":"与旧日回响相遇，选择你的际遇。","camp":"恢复生命，免费升级或删除一张牌。","treasure":"拾取金币，再挑选一件遗物。"}
+	if typ in ["battle","elite","boss"]:
+		var indexes: Array=node.get("enemyIndexes",[])
+		var art: int=int(_game.db.enemies[int(indexes[0])].art) if not indexes.is_empty() else 1
+		var preview=_atlas(parent,_portraits,Rect2(29,0,287,152),art,3,2)
+		var region: Rect2=preview.texture.region
+		region.size.y*=0.64
+		preview.texture.region=region
+	else:_atlas(parent,_spells,Rect2(29,0,287,152),{"shop":4,"event":3,"camp":2,"treasure":6}.get(typ,4),4,2)
+	var label: String=str(node.get("label",""))
+	if label.is_empty():label=names.get(typ,"前行")
+	_label(parent,label,Rect2(29,167,288,54),25,PALE,false,true)
+	_label(parent,description.get(typ,""),Rect2(29,228,288,72),17,MUTED)
+	_button(parent,"踏 入 此 地   →",Rect2(28,325,290,60),"enter",[node.id],true)
 
 func _hero_sidebar(run: Dictionary) -> void:
 	var side := _panel(_host, Rect2(1200, 130, 346, 785), GOLD)
-	_atlas(side, _portraits, Rect2(11, 11, 324, 259), 0, 3, 2)
+	_atlas(side, _portraits, Rect2(24, 24, 298, 245), 0, 3, 2)
 	_label(side, "织律者", Rect2(22, 280, 302, 43), 32, PALE, true, true)
 	var hp: float = float(run.get("hp", 0))
 	var max_hp: float = float(run.get("maxHp", 80))
-	_label(side, "生命    %d / %d" % [int(hp), int(max_hp)], Rect2(25, 329, 295, 36), 23, PALE, true)
+	_label(side, str(int(hp)), Rect2(25, 329, 295, 36), 23, PALE, true)
 	var bar := ProgressBar.new()
 	bar.position = Vector2(26, 375)
 	bar.size = Vector2(294, 10)
@@ -310,15 +309,19 @@ func _hero_sidebar(run: Dictionary) -> void:
 	bar.value = hp
 	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.add_theme_stylebox_override("background", _style(Color("283345"), Color("283345"), 0, 4))
-	bar.add_theme_stylebox_override("fill", _style(Color("b45768"), Color("b45768"), 0, 4))
+	var bar_bg=_style(Color("342625"),Color("9b7a44"),1,4)
+	var bar_fill=_style(Color("b45768"),Color("d4848b"),1,4)
+	for s in [bar_bg,bar_fill]:
+		s.set_content_margin_all(0)
+	bar.add_theme_stylebox_override("background",bar_bg)
+	bar.add_theme_stylebox_override("fill",bar_fill)
+	bar.size=Vector2(294,10)
 	side.add_child(bar)
-	_button(side, "查看卡组   %d 张" % run.get("deck", []).size(), Rect2(23, 414, 300, 54), "deck")
+	var deck=_button(side, str(run.get("deck", []).size()), Rect2(93, 414, 160, 54), "deck")
+	FantasySkin.icon(deck,"layers",Rect2(21,15,24,24));deck.tooltip_text="查看卡组"
 	_label(side, "随行遗物", Rect2(24, 491, 299, 31), 19, GOLD)
 	var relics: Array = run.get("relics", [])
-	if relics.is_empty():
-		_label(side, "旅途才刚刚开始。", Rect2(25, 536, 297, 60), 19, MUTED)
-	else:
+	if not relics.is_empty():
 		for i: int in range(mini(relics.size(), 4)):
 			var relic: Dictionary = _lookup(_game.db.relics, str(relics[i]))
 			_label(side, "◇  " + str(relic.get("name", relics[i])), Rect2(25, 535 + i * 48, 294, 40), 19, PALE).tooltip_text = str(relic.get("text", ""))
@@ -341,7 +344,6 @@ func _service() -> void:
 		"treasure": _treasure(main, node)
 		"event": _event(main, run, node)
 	_button(main, "继续旅程    →", Rect2(753, 688, 287, 58), "leave_node", [], true)
-	_label(main, "此地物件可以另外互动", Rect2(35, 694, 675, 47), 17, MUTED)
 	_reveal(main)
 	_scene_object(run, node)
 
@@ -427,8 +429,7 @@ func _scene_object(run: Dictionary, node: Dictionary) -> void:
 	var definition: Dictionary = _lookup(_game.db.objects, str(node.get("objectDef", "")))
 	if definition.is_empty(): return
 	var side := _panel(_host, Rect2(1160, 132, 387, 780), GOLD)
-	_atlas(side, _spells, Rect2(12, 12, 363, 197), int(definition.get("art", 3)), 4, 2)
-	_label(side, "此地的随机物件", Rect2(23, 225, 341, 31), 17, CYAN)
+	_atlas(side, _spells, Rect2(24, 24, 339, 185), int(definition.get("art", 3)), 4, 2)
 	_label(side, str(definition.name), Rect2(21, 265, 345, 46), 31, GOLD, false, true)
 	_label(side, str(definition.get("text", "")), Rect2(24, 323, 338, 70), 19, MUTED)
 	_line(side, 23, 406, 341)
@@ -443,13 +444,13 @@ func _scene_object(run: Dictionary, node: Dictionary) -> void:
 			var available: bool = bool(item.get("available", true))
 			var price: int = int(item.get("cost", 0))
 			var button := _button(side, "", Rect2(20, y, 347, height), "scene_object", [item.id], false, not available or int(run.gold) < price)
-			_label(button, str(item.get("label", "互动")), Rect2(13, 5, 320, 29), 21, PALE)
-			_label(button, str(item.get("reward", "")) + (" · %d 金币" % price if price else " · 免费"), Rect2(13, 34, 319, 29), 16, GOLD if available else MUTED)
+			_label(button, str(item.get("label", "互动")), Rect2(25, 8, 297, 29), 19, PALE)
+			_label(button, str(item.get("reward", "")) + (" · %d 金币" % price if price else " · 免费"), Rect2(25, 35, 297, 27), 15, GOLD if available else MUTED)
 			if height > 70.0 and not str(item.get("need", "")).is_empty():
 				var needs: Dictionary = {"fire":"火焰", "block":"防护", "draw":"抽牌", "scheduling":"抽牌或检索"}
-				_label(button, "卡组提供：" + str(item.get("source", "")) if available else "需要卡组能力：" + str(needs.get(item.need, item.need)), Rect2(13, 61, 319, 20), 13, CYAN if available else MUTED)
+				_label(button, "卡组提供：" + str(item.get("source", "")) if available else "需要卡组能力：" + str(needs.get(item.need, item.need)), Rect2(25, 60, 297, 20), 12, CYAN if available else MUTED)
 			y += height + 9
-	_label(side, "卡组决定互动方式 · 不消耗卡牌\n各选项共享一份资源", Rect2(22, 723, 345, 42), 15, MUTED, true)
+	side.tooltip_text="物件互动取决于卡组能力，不消耗卡牌；各选项共享一份资源。"
 	if node.get("scouted", false):
 		side.tooltip_text = "路线情报：第 3 站可选精英，第 8 站为领主；第 2、4 站各有商店或事件，第 6、7 站各有宝藏或营地。"
 	_reveal(side, 0.15)
